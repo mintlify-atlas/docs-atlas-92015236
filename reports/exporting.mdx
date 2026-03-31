@@ -1,0 +1,221 @@
+---
+title: Exporting PDFs
+description: Generate PDF exports of asset inventories, reports, daily asset lists with QR codes, and movement history from anywhere in Ophira Web.
+---
+
+Ophira Web lets you export data as PDF files from four different pages. Each export captures only the data currently visible — filters you have applied are always respected before the file is generated.
+
+<Tip>
+Apply your filters before clicking any export button. The exported PDF will contain exactly the rows shown on screen, so narrowing down by category, status, date, or search term gives you a focused report rather than a full data dump.
+</Tip>
+
+<Tabs>
+  <Tab title="Asset Inventory">
+    ## Asset Inventory Export
+
+    Exported from the **Inventario de Activos** page ([/features/assets](/features/assets)).
+
+    ### How to export
+
+    <Steps>
+      <Step title="Open the Assets page">
+        Navigate to **Inventario de Activos** from the sidebar. The full asset list loads automatically from the API.
+      </Step>
+      <Step title="Apply filters (optional)">
+        Use the search bar, category dropdown, or status dropdown to narrow the list. The export will include only the rows currently visible.
+
+        - **Search bar** — matches against asset ID, name, or responsible person.
+        - **Category filter** — shows only assets belonging to the selected category.
+        - **Status filter** — limits results to Activo, Mantenimiento, or Retirado.
+      </Step>
+      <Step title="Click Export">
+        Click the **Exportar** button in the top-right corner of the page header. The PDF is generated in the browser and downloaded immediately.
+      </Step>
+    </Steps>
+
+    ### PDF contents
+
+    The exported file is a landscape A4 document with:
+
+    - **Header:** "Inventario de Activos", export date (`dd/mm/yyyy`), and a record count.
+    - **Table** with the following columns:
+
+    | Column | Field |
+    |---|---|
+    | ID | `id_activo` |
+    | Nombre | `nombre` |
+    | Categoria | `categoria` |
+    | Aula | `aula` (room name) |
+    | Estado | `estado` |
+    | Responsable | Full name + position + area, concatenated |
+    | Fecha registro | `fecha_registro` formatted as `YYYY-MM-DD` |
+
+    ### File name
+
+    ```
+    activos_YYYY-MM-DD.pdf
+    ```
+
+    <Note>
+    If no assets match the active filters, the export button does nothing. Adjust or clear your filters first.
+    </Note>
+  </Tab>
+
+  <Tab title="Reports page">
+    ## Reports Page Export
+
+    Exported from the **Análisis y Reportes** page ([/reports/overview](/reports/overview)).
+
+    ### How to export
+
+    <Steps>
+      <Step title="Open the Reports page">
+        Navigate to **Análisis y Reportes** from the sidebar.
+      </Step>
+      <Step title="Select a date range">
+        Choose a date range from the dropdown — **Tras 30 días**, **Tras 90 días**, or **Tras 1 año**. This determines which assets appear in the summary stats and activity table.
+      </Step>
+      <Step title="Click Export PDF">
+        Click the **Exportar PDF** button next to the date range dropdown. The PDF is generated immediately and downloaded.
+      </Step>
+    </Steps>
+
+    ### PDF contents
+
+    The exported file is a landscape A4 document with:
+
+    - **Header:** "Reporte de Activos", generation date, and the applied range label (e.g. "Tras 30 dias").
+    - **Summary line:** Total de Activos, Bienes Activos, Mantenimiento, and Valor Total (in MXN).
+    - **Status distribution table** (left side) with columns:
+
+    | Column | Example |
+    |---|---|
+    | Estado | Activo / Mantenimiento / Retirado |
+    | Porcentaje | `84.2%` |
+
+    - **Recent Activity table** (right side) with columns: Activo, Categoría, Responsable, Estado, Última vista (date + room), Acción.
+
+    ### File name
+
+    ```
+    reporte_activos_YYYY-MM-DD.pdf
+    ```
+  </Tab>
+
+  <Tab title="Assets of the Day">
+    ## Assets of the Day Export
+
+    Exported from the **Dashboard** ([/features/dashboard](/features/dashboard)).
+
+    This export is designed for daily intake workflows. It captures only assets whose `fecha_registro` or `fecha_compra` matches today's date, and prints a QR code alongside each asset's details so physical labels can be verified at a glance.
+
+    ### How to export
+
+    <Steps>
+      <Step title="Open the Dashboard">
+        Navigate to the **Dashboard** from the sidebar.
+      </Step>
+      <Step title="Click Activos del Día">
+        Click the **Activos del Día** button in the top-right area of the page header. The button is distinguishable by its blue tinted background.
+      </Step>
+      <Step title="Wait for QR generation">
+        The page generates a QR code for each asset using the `qrcode` library. This happens client-side and takes a moment when there are many assets. The PDF downloads automatically once complete.
+      </Step>
+    </Steps>
+
+    ### PDF contents
+
+    The exported file is a portrait A4 document. For each asset registered today, one entry is printed containing:
+
+    | Field | Source |
+    |---|---|
+    | ID | `id_activo` (or `id`) |
+    | Nombre | `nombre` |
+    | Aula | `aula` or `id_aula` |
+    | QR code | Generated from the asset's ID; printed to the right of the text fields |
+
+    New pages are added automatically when the content exceeds the page height.
+
+    ### File name
+
+    ```
+    activos_dia_YYYY-MM-DD.pdf
+    ```
+
+    <Warning>
+    If no assets were registered today, the export does not generate a file. Instead, a browser alert appears: "No hay activos registrados en el día de hoy." Register at least one asset for today before using this export.
+    </Warning>
+  </Tab>
+
+  <Tab title="History">
+    ## History Export
+
+    Exported from the **Historial de Actividad** page ([/features/history](/features/history)).
+
+    This export captures the complete movement log for your assets. Because the history table supports filtering by search term, movement type, and specific date, you can produce a focused export covering only the entries you need.
+
+    ### How to export
+
+    <Steps>
+      <Step title="Open the History page">
+        Navigate to **Historial de Actividad** from the sidebar.
+      </Step>
+      <Step title="Apply filters (optional)">
+        Use any combination of the three filters before exporting:
+
+        - **Search bar** — matches across movement ID, asset ID, user name, position, area, asset name, category, and movement type.
+        - **Action type dropdown** — filters to a specific movement type (e.g. Actualizacion, Baja, Depreciacion). Defaults to "Todas las Acciones".
+        - **Date picker** — limits records to a single specific date (`YYYY-MM-DD`).
+
+        Click **Limpiar Filtros** to reset all three filters at once.
+      </Step>
+      <Step title="Click Export PDF">
+        Click the **Exportar PDF** button in the top-right header. The PDF downloads immediately. If the filtered list is empty, nothing is exported.
+      </Step>
+    </Steps>
+
+    ### PDF contents
+
+    The exported file is a landscape A4 document with:
+
+    - **Header:** "Historial de Actividad" and a record count for the filtered result set.
+    - **Bar chart:** A visual breakdown of movement counts by type (e.g. how many Actualizacion, Baja, Depreciacion entries are in the filtered set). Bars are labeled with their count values.
+    - **Full history table** starting below the chart, with the following columns:
+
+    | Column | Source field |
+    |---|---|
+    | Fecha | `fecha_movimiento` formatted as `dd MMM YYYY` |
+    | Usuario | First name + first surname of the user who performed the movement |
+    | Responsable Activo | Name of the person responsible for the affected asset |
+    | ID Activo | `id_activo` |
+    | Nombre | `nombre_activo` |
+    | Categoría | `categoria_activo` |
+    | Movimiento | `tipo_movimiento` (capitalized) |
+    | Descripcion | `descripcion` field from the movement record |
+
+    ### File name
+
+    ```
+    historial_YYYY-MM-DD.pdf
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Reports & Analytics" icon="chart-bar" href="/reports/overview">
+    View summary stats, acquisition trends, and status distributions on the Análisis y Reportes page.
+  </Card>
+  <Card title="Asset Inventory" icon="package" href="/features/assets">
+    Browse, filter, and manage the full list of registered fixed assets.
+  </Card>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    See live KPIs and export assets registered today with QR codes.
+  </Card>
+  <Card title="History" icon="clock" href="/features/history">
+    Audit the complete movement log for all assets across all users.
+  </Card>
+</CardGroup>

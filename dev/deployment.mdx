@@ -1,0 +1,189 @@
+---
+title: 'Deployment'
+description: 'Build Ophira Web for production and serve the static output on any web server or hosting platform.'
+---
+
+## Overview
+
+`pnpm build` compiles the React application into a fully static site — plain HTML, JavaScript, CSS, and assets — written to the `dist/` folder. That folder can then be uploaded to any static file host or served by any web server.
+
+<Warning>
+  Before running the production build, update `URL_BASE` in `src/services/api.js` to your production API URL. The hardcoded `http://localhost:4000/api/` will be baked into the bundle and will not work once the app is deployed.
+
+  ```javascript src/services/api.js
+  // Change this before building for production
+  const URL_BASE = "https://api.yourdomain.com/api/";
+  ```
+</Warning>
+
+---
+
+## Build and deploy workflow
+
+<Steps>
+  <Step title="Update the backend API URL">
+    Open `src/services/api.js` and change `URL_BASE` to the full URL of your production API:
+
+    ```javascript src/services/api.js
+    const URL_BASE = "https://api.yourdomain.com/api/";
+    ```
+  </Step>
+
+  <Step title="Run the production build">
+    <CodeGroup>
+
+    ```bash pnpm
+    pnpm build
+    ```
+
+    ```bash npm
+    npm run build
+    ```
+
+    ```bash yarn
+    yarn build
+    ```
+
+    </CodeGroup>
+
+    Vite bundles and minifies the application. The output is written to `dist/`. The `dist/` folder is listed in `.gitignore` and should not be committed to source control.
+  </Step>
+
+  <Step title="Preview the build locally (optional)">
+    Before uploading, you can verify the production bundle locally:
+
+    <CodeGroup>
+
+    ```bash pnpm
+    pnpm preview
+    ```
+
+    ```bash npm
+    npm run preview
+    ```
+
+    ```bash yarn
+    yarn preview
+    ```
+
+    </CodeGroup>
+
+    Vite serves the `dist/` folder at `http://localhost:4173`. This uses the same static files that will be deployed, so it's a reliable way to catch issues before going live.
+  </Step>
+
+  <Step title="Upload or deploy the dist/ folder">
+    Copy the contents of `dist/` to your server or hosting platform. See [Hosting options](#hosting-options) below for platform-specific instructions.
+  </Step>
+</Steps>
+
+---
+
+## Build output
+
+After a successful build, the `dist/` folder contains:
+
+```
+dist/
+├── index.html          # HTML shell — entry point for all routes
+├── assets/
+│   ├── index-[hash].js  # Bundled and minified JavaScript
+│   └── index-[hash].css # Bundled and minified CSS
+└── vite.svg            # Favicon (copied from public/)
+```
+
+The filenames include a content hash so that browsers invalidate their cache automatically when files change between deployments.
+
+---
+
+## Hosting options
+
+The `dist/` folder is a static site and can be hosted on any platform that serves static files. The only requirement is that the server must return `index.html` for all URL paths that don't match a file on disk — this is what enables client-side routing with React Router.
+
+<AccordionGroup>
+  <Accordion title="Nginx">
+    Configure Nginx to serve the `dist/` folder and fall back to `index.html` for any path that doesn't match a physical file:
+
+    ```nginx /etc/nginx/sites-available/ophira
+    server {
+        listen 80;
+        server_name yourdomain.com;
+        root /var/www/ophira/dist;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }
+    ```
+
+    The `try_files $uri $uri/ /index.html` directive is essential. Without it, navigating directly to a route like `/features/assets` returns a 404 because there is no corresponding file in `dist/`.
+
+    After updating the config, reload Nginx:
+
+    ```bash
+    sudo nginx -t && sudo systemctl reload nginx
+    ```
+  </Accordion>
+
+  <Accordion title="Apache">
+    Add an `.htaccess` file inside `dist/` (or configure your virtual host) to redirect all requests to `index.html`:
+
+    ```apache dist/.htaccess
+    Options -MultiViews
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.html [QSA,L]
+    ```
+
+    Make sure `mod_rewrite` is enabled on your Apache server.
+  </Accordion>
+
+  <Accordion title="Vercel">
+    Push the repository to GitHub and connect it to a Vercel project. Set the **build command** to `pnpm build` and the **output directory** to `dist`. Vercel handles SPA fallback routing automatically.
+
+    Alternatively, deploy directly from the CLI:
+
+    ```bash
+    pnpm build
+    npx vercel dist/
+    ```
+  </Accordion>
+
+  <Accordion title="Netlify">
+    Drag and drop the `dist/` folder into the Netlify dashboard, or configure continuous deployment from your repository with:
+
+    - **Build command:** `pnpm build`
+    - **Publish directory:** `dist`
+
+    Add a `_redirects` file to `dist/` (or place it in `public/` so Vite copies it automatically) to enable SPA routing:
+
+    ```text public/_redirects
+    /*  /index.html  200
+    ```
+  </Accordion>
+
+  <Accordion title="GitHub Pages">
+    GitHub Pages serves static files directly. After building, push the contents of `dist/` to the `gh-pages` branch (or configure Pages to serve from `docs/`). Because GitHub Pages does not support SPA fallback routing natively, you will need the [404-redirect trick](https://github.com/rafgraph/spa-github-pages) or use a custom domain with a proxy.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Important considerations
+
+**Backend accessibility** — The production API must be reachable from the domain where the frontend is hosted. A frontend on `https://app.yourdomain.com` hitting an API on `http://localhost:4000` will always fail.
+
+**CORS** — The backend must include the frontend's production domain in its CORS `Access-Control-Allow-Origin` header. Without this, browsers will block all API requests from the deployed app.
+
+**Client-side routing** — All navigation in Ophira Web is handled by React Router on the client. The web server must serve `index.html` for every route that doesn't correspond to a static file. The Nginx config above handles this with `try_files`.
+
+**HTTPS** — Deploy behind HTTPS in production. Modern browsers block mixed-content requests (an HTTPS page calling an HTTP API), and the JWT tokens used for authentication must be transmitted securely.
+
+<CardGroup cols={2}>
+  <Card title="Local setup" icon="computer" href="/dev/setup">
+    Step-by-step guide to running Ophira Web locally.
+  </Card>
+  <Card title="Environment & configuration" icon="gear" href="/dev/environment">
+    How to configure the backend URL, Tailwind, and ESLint.
+  </Card>
+</CardGroup>

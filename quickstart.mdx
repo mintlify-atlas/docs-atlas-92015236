@@ -1,80 +1,154 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get up and running with Ophira Web in minutes — log in, configure a location and category, create your first asset, and scan its QR code.
 ---
 
-## Get started in three steps
+This guide walks you through the first things you need to do after your account is created: logging in, orienting yourself in the app, setting up the structure your assets will live in, creating an asset, and scanning it with the built-in QR scanner.
 
-Get your documentation site running locally and make your first customization.
+<Info>
+You need an existing account to log in. Accounts are created by an Admin user from the **Users** section. If you do not have credentials yet, contact your system administrator.
+</Info>
 
-### Step 1: Set up your local environment
+<Steps>
+  <Step title="Log in to Ophira Web">
+    Open Ophira Web in your browser. You will land on the login page.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    1. Enter your **email address** in the Email field.
+    2. Enter your **password** in the Password field.
+    3. If you are on a personal device and want your session to persist after closing the browser, check **Recuérdame** (Remember me). Leave it unchecked on shared or public devices.
+    4. Click **Iniciar Sesión**.
 
-### Step 2: Deploy your changes
+    On a successful login, you are redirected to the Dashboard.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    <Note>
+    If you check "Remember me", your session token is stored in `localStorage` and persists across browser restarts. If you leave it unchecked, the token is stored in `sessionStorage` and is cleared when you close the tab or browser. See [Authentication](/authentication) for full details.
+    </Note>
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    If you forgot your password, click **¿Olvidaste tu contraseña?** on the login page. Enter your email address and click **Enviar correo** — this opens your default mail client with a pre-drafted password reset request addressed to the system administrator.
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Understand the sidebar navigation">
+    After logging in, you will see a fixed left sidebar labelled **Ophira QR**. The sidebar contains all the main sections of the application:
 
-### Step 3: Go live
+    | Sidebar item | What it does |
+    |---|---|
+    | **Dashboard** | Summary stats, recent activity, and quick actions for locations and categories |
+    | **Activos** | Full asset registry with search and filters |
+    | **Leer QR** | Camera-based QR code scanner |
+    | **Reportes** | Reports and exports |
+    | **Historial** | Asset movement history log |
+    | **Auditorias** | Audit session management |
+    | **Usuarios** | User account management |
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    At the bottom of the sidebar you can see the logged-in user's name and email address, a button to toggle between light and dark mode, and a **Cerrar sesión** button to sign out.
 
-## Next steps
+    <Note>
+    The current version of Ophira Web requires the Administrador role to access any page. Once logged in as an Admin, all sidebar navigation items are visible and accessible.
+    </Note>
+  </Step>
 
-Now that you have your docs running, explore these key features:
+  <Step title="Set up a building and category">
+    Before creating assets, you need at least one location (a room inside a building) and at least one category.
+
+    **Create a building**
+
+    1. Go to **Dashboard**.
+    2. Click **Nueva Ubicacion** in the top-right area of the Dashboard header.
+    3. A panel opens with three tabs. Start with **Nuevo edificio**.
+    4. Fill in the fields:
+       - **Clave** — a short identifier for the building (e.g., `A`, `B`, `LAB`)
+       - **Nombre** — the building's full name (e.g., `Edificio Administrativo`)
+       - **Cantidad de pisos** — total number of floors in the building
+       - **Direccion** — the physical address of the building
+    5. Click **Crear edificio**.
+
+    **Create a floor**
+
+    1. Still in the **Nueva Ubicacion** panel, click **Nuevo piso**.
+    2. Select the building you just created.
+    3. Choose the floor number from the dropdown.
+    4. Select how many rooms are on that floor.
+    5. Click **Crear piso**.
+
+    **Create a room**
+
+    1. Click **Nueva aula** in the same panel.
+    2. Select the building, then the floor.
+    3. Choose the room number and enter the room type (e.g., `Aula`, `Laboratorio`, `Oficina`).
+    4. Click **Crear aula**.
+
+    **Create a category**
+
+    1. On the Dashboard, find the **Distribución por Categoría** card.
+    2. Click the three-dot menu icon in the top-right corner of that card.
+    3. Enter a **Nombre de categoria** (e.g., `Electrónicos`) and a **Descripcion breve**.
+    4. Click **Crear categoria**.
+
+    <Note>
+    Only users with Admin or Supervisor roles can create buildings, floors, rooms, and categories. If you do not see the **Nueva Ubicacion** button or the category menu, your role does not have permission to perform these actions.
+    </Note>
+  </Step>
+
+  <Step title="Create your first asset">
+    1. Click **Nuevo Activo** in the Dashboard header, or navigate to **Activos** in the sidebar and click the **Nuevo Activo** button there.
+    2. You are taken to the asset creation form. Fill in the required fields:
+
+       | Field | Description |
+       |---|---|
+       | **Nombre del Activo** | The asset's name (e.g., `Dell Latitude 5520`) |
+       | **Número de Serie** | Serial number |
+       | **Modelo** | Model identifier |
+       | **Fecha de Compra** | Purchase date |
+       | **Precio de Compra** | Original purchase price in MXN |
+       | **Valor Actual** | Current estimated value in MXN |
+       | **Valor Residual** | Estimated residual value at end of useful life in MXN |
+       | **Vida Útil (años)** | Expected useful life in years |
+       | **Categoría** | The category you created in the previous step |
+       | **Método de Depreciación** | Depreciation method (loaded from the system) |
+       | **Estado** | Current asset status (loaded from the system) |
+       | **Aula en que se ubica** | The room where the asset is physically located |
+       | **Responsable** | The user responsible for this asset |
+       | **Descripción** | A brief description of the asset |
+
+    3. If the asset has multiple physical parts stored in different rooms, enable the **Multiparte** toggle and add each part with its own room assignment.
+    4. Click **Guardar** to save the asset.
+
+    After saving, the asset is assigned a unique numeric ID and a QR code is generated automatically. You can view and download the QR code from the asset detail page.
+
+    <Tip>
+    The Dashboard's **Actividad Reciente** table updates immediately after you save a new asset. You can also use **Activos del Día** on the Dashboard to export a PDF of all assets registered today, including their QR codes.
+    </Tip>
+  </Step>
+
+  <Step title="Scan the asset's QR code">
+    1. Navigate to **Leer QR** in the sidebar.
+    2. Your browser will request camera access — allow it.
+    3. Point the camera at the QR code on the asset you just created.
+    4. The scanner reads the QR code automatically and looks up the asset by its ID.
+    5. The asset's details appear below the camera view: name, category, status, responsible user, and location.
+    6. The scan is recorded as a movement of type `escaneo` in the asset's history.
+
+    If your camera is not available or you are testing without a physical QR code, enter the asset's numeric ID in the **Busqueda manual** field on the Scanner page and press the search button.
+
+    <Note>
+    Every scan creates a movement record linked to your user account. This record appears in the **Historial** module and is visible in the **Auditorias** module when an audit session is active for that location.
+    </Note>
+  </Step>
+</Steps>
+
+## What's next
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Assets" icon="package" href="/features/assets">
+    Learn how to search, filter, edit, and export the full asset registry.
+  </Card>
+  <Card title="Audits" icon="clipboard-check" href="/features/audits">
+    Start an audit session to verify assets in a specific location.
+  </Card>
+  <Card title="Reports" icon="file-text" href="/reports/overview">
+    Generate reports on asset values, categories, and status.
+  </Card>
+  <Card title="Users" icon="users" href="/admin/users">
+    Add team members and assign them the appropriate role.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

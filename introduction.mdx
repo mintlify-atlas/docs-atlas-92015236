@@ -1,0 +1,70 @@
+---
+title: Introduction
+description: An overview of Ophira Web — a fixed asset management platform built around QR technology.
+---
+
+Ophira Web is a fixed asset management SaaS platform that uses QR codes to track, audit, and report on physical assets across buildings and locations. It is designed for organizations that need a structured inventory of equipment, furniture, and other fixed assets assigned to specific rooms and responsible users.
+
+Every asset in Ophira Web is identified by a unique QR code. Users can scan that code from any device with a camera to pull up the asset's full record, log a movement, or initiate an audit — no manual lookup required.
+
+## Who it is for
+
+Ophira Web is built for institutions and organizations that manage large inventories of physical assets across multiple buildings or campuses. Typical use cases include universities, government offices, and any facility where assets are distributed across many rooms and must be periodically audited.
+
+## Key modules
+
+<CardGroup cols={3}>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    A real-time summary of your asset inventory: total assets, items in maintenance, recently added assets, and total inventory value. Also the entry point for creating new locations and categories.
+  </Card>
+  <Card title="Assets" icon="package" href="/features/assets">
+    The full asset registry. Search, filter by category or status, create new assets, edit existing records, and download asset lists as PDF.
+  </Card>
+  <Card title="Scanner" icon="qr-code" href="/features/scanner">
+    Use your device camera to scan an asset's QR code and immediately view its details, responsible user, location, and recent movement history.
+  </Card>
+  <Card title="Audits" icon="clipboard-check" href="/features/audits">
+    Create and manage audit sessions. Each audit records which assets were verified, their condition at the time, and any discrepancies found.
+  </Card>
+  <Card title="History" icon="history" href="/features/history">
+    A chronological log of all asset movements, scans, and status changes across the organization.
+  </Card>
+  <Card title="Reports" icon="file-text" href="/reports/overview">
+    Generate and export reports on asset status, depreciation values, and category distribution.
+  </Card>
+  <Card title="Users" icon="users" href="/admin/users">
+    Manage user accounts, assign roles, and control which staff members have access to which areas of the platform.
+  </Card>
+  <Card title="Locations" icon="map-pin" href="/admin/locations">
+    Define the physical structure of your organization: buildings, floors, and rooms. Assets are then assigned to specific rooms.
+  </Card>
+  <Card title="Categories" icon="layers" href="/admin/categories">
+    Organize assets by type (e.g., Electronics, Furniture, Equipment) to enable filtered views and category-level reporting.
+  </Card>
+</CardGroup>
+
+## Roles
+
+Ophira Web uses role-based access control. Every user account is assigned one of four roles, which determines what they can see and do in the platform.
+
+| Role | Description |
+|---|---|
+| **Administrador** | Full access to all modules including user management, location setup, category management, and reports. Admins can create, edit, and delete any record in the system. |
+| **Supervisor** | Intended for managing assets and audit workflows in an assigned area. |
+| **Auditor** | Intended for conducting and recording asset audits using the QR scanner. |
+| **Usuario** | Standard operational access for viewing and scanning assets. |
+
+<Warning>
+The current version of the web application only grants access to users with the **Administrador** role. Accounts assigned other roles are redirected to the login page. See [Authentication](/authentication) for full details.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Walk through logging in, setting up your first location and category, and creating your first asset end-to-end.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Learn how sessions work, what "Remember me" does, and how role-based access is enforced.
+  </Card>
+</CardGroup>

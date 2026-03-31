@@ -1,0 +1,267 @@
+---
+title: API client
+description: How Ophira Web communicates with the backend — the fetch-based HTTP client, JWT auth header, and error handling pipeline.
+---
+
+All HTTP calls in Ophira Web go through the `api` object exported from `src/services/api.js`. It wraps the native `fetch` API, attaches the JWT auth header automatically, and converts every failure into a normalised Spanish error message shown to the user via `window.alert`.
+
+## Base URL
+
+```javascript
+const URL_BASE = "http://localhost:4000/api/";
+```
+
+Every endpoint passed to the `api` methods is appended directly to this constant. For example, `api.get('activos')` fetches `http://localhost:4000/api/activos`.
+
+<Note>
+  Change `URL_BASE` to your production server address before deploying. See [environment configuration](/dev/environment) for the recommended approach using Vite env variables.
+</Note>
+
+## Auth storage
+
+`src/services/authStorage.js` manages the JWT token in the browser. The `api` client calls `getToken()` before every request.
+
+```javascript
+// src/services/authStorage.js
+const TOKEN_KEY = 'token';
+
+// Read token from localStorage first, then sessionStorage.
+export const getToken = () =>
+  localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+
+// Persist token. If rememberMe is true, use localStorage; otherwise sessionStorage.
+export const saveToken = (token, rememberMe) => {
+  if (rememberMe) {
+    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.removeItem(TOKEN_KEY);
+    return;
+  }
+  sessionStorage.setItem(TOKEN_KEY, token);
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+// Remove the token from both storages (logout).
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+};
+
+// Decode and return the JWT payload object, or null on any failure.
+export const getTokenPayload = () => {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(payloadBase64));
+  } catch {
+    return null;
+  }
+};
+
+// Return the numeric role from the payload, or null if not present.
+export const getTokenRole = () => {
+  const payload = getTokenPayload();
+  const rol = Number(payload?.rol);
+  return Number.isFinite(rol) ? rol : null;
+};
+```
+
+| Function | Storage read | Notes |
+|---|---|---|
+| `getToken()` | `localStorage` → `sessionStorage` | Returns the first token found. |
+| `saveToken(token, rememberMe)` | Writes to one, clears the other | `rememberMe=true` → `localStorage`; `false` → `sessionStorage`. |
+| `clearToken()` | Clears both | Called on logout and on role-check failure in `ProtectedRoute`. |
+| `getTokenPayload()` | Reads via `getToken()` | Base64-decodes the JWT middle segment. No signature verification. |
+| `getTokenRole()` | Via `getTokenPayload()` | Returns `payload.rol` as a number, or `null`. |
+
+## The `api` object
+
+```javascript
+// src/services/api.js (export)
+export const api = {
+  get: async (endpoint) => { ... },
+  post: async (endpoint, data) => { ... },
+  put: async (endpoint, data) => { ... },
+  delete: async (endpoint) => { ... },
+};
+```
+
+Every method is `async` and returns the parsed JSON response body on success. On failure, the error pipeline runs (see below) and a `throw` propagates to the caller.
+
+### `api.get(endpoint)`
+
+```javascript
+get: async (endpoint) => {
+  const token = getToken();
+  try {
+    const response = await fetch(`${URL_BASE}${endpoint}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw await construirErrorHttp(response);
+    return await response.json();
+  } catch (error) {
+    manejarErrorDeRed(error);
+  }
+},
+```
+
+### `api.post(endpoint, data)`
+
+```javascript
+post: async (endpoint, data) => {
+  const token = getToken();
+  try {
+    const response = await fetch(`${URL_BASE}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw await construirErrorHttp(response);
+    return await response.json();
+  } catch (error) {
+    manejarErrorDeRed(error);
+  }
+},
+```
+
+### `api.put(endpoint, data)`
+
+Same shape as `post` but uses `method: 'PUT'`.
+
+### `api.delete(endpoint)`
+
+Same shape as `get` but uses `method: 'DELETE'`. No request body is sent.
+
+## Error handling pipeline
+
+When a request fails, control passes through four functions in sequence:
+
+<Steps>
+  <Step title="construirErrorHttp — parse the response body">
+    Tries `response.json()`. If that throws, falls back to `response.text()`. The raw body is passed to `leerMensajeBackend` to extract a string message from any of the keys `message`, `mensaje`, `msg`, `error.message`, `err.message`, `error`, `err`, or `detail`.
+
+    ```javascript
+    const construirErrorHttp = async (response) => {
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        try { payload = await response.text(); } catch { payload = null; }
+      }
+      const backendMessage = leerMensajeBackend(payload);
+      const message = normalizarMensajeError({ status: response.status, backendMessage });
+      const error = new Error(message);
+      error.status = response.status;
+      error.payload = payload;
+      error.alreadyAlerted = true;
+      alertarError(message);
+      return error;
+    };
+    ```
+  </Step>
+  <Step title="normalizarMensajeError — map to user-friendly Spanish">
+    Checks the raw backend message (lowercased) against known patterns, then falls back to HTTP status codes.
+
+    | Pattern / status | Message shown |
+    |---|---|
+    | `duplicate key value`, `already exists` | `Ya existe un registro con esos datos.` |
+    | `foreign key`, `violates foreign key` | `No se pudo guardar: hay datos relacionados invalidos o inexistentes.` |
+    | `null value`, `not-null`, `requerido`, `obligatorio` | `Faltan campos obligatorios. Verifica los datos e intenta de nuevo.` |
+    | `invalid input syntax`, `formato` | `Hay datos con formato invalido. Corrigelos e intenta de nuevo.` |
+    | HTTP 400 | Backend message or `Solicitud invalida. Verifica los datos.` |
+    | HTTP 401 | Backend message or `No autorizado. Inicia sesion nuevamente.` |
+    | HTTP 403 | Backend message or `No tienes permisos para esta accion.` |
+    | HTTP 404 | Backend message or `No se encontro la informacion solicitada.` |
+    | HTTP 409 | Backend message or `Ya existe un registro con esos datos.` |
+    | HTTP 5xx | Backend message or `Ocurrio un error en el servidor. Intenta de nuevo.` |
+  </Step>
+  <Step title="alertarError — show the message to the user">
+    Calls `window.alert(message)` if `window` is defined and the message is non-empty.
+
+    ```javascript
+    const alertarError = (message) => {
+      if (typeof window !== 'undefined' && message) {
+        window.alert(message);
+      }
+    };
+    ```
+
+    The error object carries `alreadyAlerted: true` so the next step knows not to alert a second time.
+  </Step>
+  <Step title="manejarErrorDeRed — handle network-level failures">
+    Called from each method's `catch` block. If the error already has `alreadyAlerted: true` (it came from `construirErrorHttp`), it is re-thrown as-is. Otherwise it is a network error — the message `'failed to fetch'` maps to a Spanish connectivity warning, and all other cases use the original error message.
+
+    ```javascript
+    const manejarErrorDeRed = (error) => {
+      if (error?.alreadyAlerted) throw error;
+
+      const raw = String(error?.message || '').toLowerCase();
+      const message = raw.includes('failed to fetch')
+        ? 'No hay conexion con el servidor. Revisa que el backend este encendido.'
+        : (error?.message || 'Error de conexion. Intenta de nuevo.');
+
+      alertarError(message);
+      const nextError = new Error(message);
+      nextError.alreadyAlerted = true;
+      throw nextError;
+    };
+    ```
+  </Step>
+</Steps>
+
+## Usage examples
+
+```javascript
+import { api } from '../services/api';
+
+// Fetch all assets
+const activos = await api.get('assets/activos');
+
+// Fetch a single asset by ID
+const activo = await api.get(`assets/activo/${id}`);
+
+// Create a new asset
+const nuevo = await api.post('assets', {
+  nombre: 'Laptop Dell XPS',
+  numero_serie: 'DX-2024-001',
+  id_categoria: 1,
+  id_estado_activo: 1,
+  id_aula: '101',
+  id_responsable: 5,
+});
+
+// Update an asset
+await api.put(`assets/${id}`, { nombre: 'Laptop Dell XPS 15' });
+
+// Delete an asset
+await api.delete(`assets/${id}`);
+
+// Fetch categories
+const categorias = await api.get('categorias');
+
+// Fetch movement history
+const movimientos = await api.get('movimientos');
+```
+
+<Warning>
+  All four methods `throw` on error after alerting the user. Wrap calls in `try/catch` or handle the rejected promise if you need to take action after a failure (e.g. keeping a form open).
+</Warning>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="building" href="/dev/architecture">
+    How the API client fits into the broader frontend structure.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Login flow and how the JWT is obtained and stored.
+  </Card>
+</CardGroup>

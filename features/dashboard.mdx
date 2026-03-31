@@ -1,0 +1,180 @@
+---
+title: Dashboard
+description: The Dashboard gives you an at-a-glance view of your entire fixed-asset inventory, including key metrics, recent activity, category distribution, and quick access to location and category management.
+---
+
+The Dashboard is the first screen you see after logging in. It aggregates live data from the asset inventory and presents it in four stat cards, a recent-activity table, and a category distribution chart. From the same page you can create new locations (buildings, floors, and rooms), add categories, and export the day's assets to PDF.
+
+## Stat cards
+
+Four cards appear at the top of the page, each sourced from the `assets/dashboard` endpoint:
+
+| Card | Field | Color |
+|---|---|---|
+| Total Assets | `total_activos` | Blue |
+| In Maintenance | `activos_en_mantenimiento` | Orange |
+| Recently Added | `aniadidos_recientemente` | Green |
+| Total Value | `valor_total` (MXN) | Purple |
+
+The **Total Value** card formats the number as Mexican pesos using `Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })`.
+
+## Recent activity table
+
+The **Actividad Reciente** panel occupies the right two-thirds of the lower section. It shows the six most recently registered assets fetched from `assets/activos`.
+
+| Column | Source field |
+|---|---|
+| Asset name + ID | `nombre`, `id_activo` |
+| Responsible party | `responsable` |
+| Status | `estado` (color from `color` field) |
+| Location | `aula` (room), `tipo_aula` (room type) |
+
+Status text is color-coded with the same palette used throughout the application:
+
+- `green` — active asset
+- `yellow` — under maintenance
+- `red` — retired
+- `blue` — informational
+
+## Distribution by category chart
+
+The **Distribución por Categoría** panel occupies the left third of the lower section. It renders an SVG donut chart by grouping all assets by their `categoria` field and calculating each category's percentage of the total.
+
+Up to five color slots are cycled:
+
+| Slot | Color |
+|---|---|
+| 1 | Blue (`#2563eb`) |
+| 2 | Slate (`#94a3b8`) |
+| 3 | Emerald (`#10b981`) |
+| 4 | Amber (`#f59e0b`) |
+| 5 | Rose (`#f43f5e`) |
+
+Categories are sorted descending by percentage. Each segment and its legend entry share the same color.
+
+### Adding a new category
+
+Click the **MoreVertical** icon (⋮) in the top-right corner of the distribution chart panel to open the category creation form.
+
+<Steps>
+  <Step title="Open the category form">
+    Click the ⋮ icon on the Distribution by Category panel header. A popover form appears.
+  </Step>
+  <Step title="Fill in the fields">
+    Enter a **Nombre de categoria** and a **Descripcion breve**. Both fields are required.
+  </Step>
+  <Step title="Save">
+    Click **Crear categoria**. The form posts to `POST /categorias` and displays a success or error banner inline. Close the popover with the X button.
+  </Step>
+</Steps>
+
+## New location
+
+Click the **Nueva Ubicacion** button in the top-right header area to open the location management dropdown. The dropdown contains three sub-forms selected by tab buttons: **Nuevo edificio**, **Nuevo piso**, and **Nueva aula**.
+
+<Tabs>
+  <Tab title="Nuevo edificio">
+    Creates a building record via `POST /ubicacion/edificio`.
+
+    | Field | Type | Required |
+    |---|---|---|
+    | Clave | Text | Yes |
+    | Nombre | Text | Yes |
+    | Cantidad de pisos | Number (≥ 1) | Yes |
+    | Direccion | Text | Yes |
+
+    <Steps>
+      <Step title="Open the dropdown">
+        Click **Nueva Ubicacion**. The dropdown opens and the **Nuevo edificio** tab is active by default. The system preloads existing buildings for use in subsequent tabs.
+      </Step>
+      <Step title="Fill in all fields">
+        Enter the building code (Clave), full name, number of floors, and street address. Cantidad de pisos must be greater than 0.
+      </Step>
+      <Step title="Create">
+        Click **Crear edificio**. A success message confirms creation. The building list refreshes immediately so it is available when creating floors.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Nuevo piso">
+    Creates a floor inside an existing building via `POST /ubicacion/piso`.
+
+    | Field | Type | Required |
+    |---|---|---|
+    | Edificio | Select (existing buildings) | Yes |
+    | Numero de piso | Select (1 … building's total floors) | Yes |
+    | Cantidad de aulas | Select (1–60) | Yes |
+
+    <Steps>
+      <Step title="Select a building">
+        Choose a building from the dropdown. The floor selector is populated dynamically up to the building's `cantidad_pisos` value.
+      </Step>
+      <Step title="Select the floor number">
+        Choose the floor you want to register.
+      </Step>
+      <Step title="Select the room count">
+        Choose how many rooms this floor contains (1–60).
+      </Step>
+      <Step title="Create">
+        Click **Crear piso**.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Nueva aula">
+    Creates a room inside an existing floor via `POST /ubicacion/aula`.
+
+    | Field | Type | Required |
+    |---|---|---|
+    | Edificio | Select (existing buildings) | Yes |
+    | Piso | Select (floors of selected building) | Yes |
+    | Numero de aula | Select (1 … floor's room count) | Yes |
+    | Tipo | Text (e.g. `Aula`, `Laboratorio`) | Yes |
+
+    <Steps>
+      <Step title="Select a building">
+        Selecting a building loads its floors. The floor and room selectors are disabled until a building is chosen.
+      </Step>
+      <Step title="Select a floor">
+        Selecting a floor loads the available room numbers for that floor.
+      </Step>
+      <Step title="Select the room number and type">
+        Choose the room number and enter the room type (defaults to `Aula`).
+      </Step>
+      <Step title="Create">
+        Click **Crear aula**.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+<Note>
+  If any required field is missing, an inline error banner appears at the top of the dropdown before the request is sent. No network call is made.
+</Note>
+
+## Assets of the day PDF
+
+Click the **Activos del Día** button (download icon) in the top-right header to export all assets whose `fecha_registro` or `fecha_compra` falls on today's calendar date.
+
+The generated PDF contains:
+- Title: **Activos del Día** with today's date and total count
+- One entry per asset: ID, name, and room
+- A QR code (80 × 80 px) beside each entry, encoding the asset ID
+
+The file is saved as `activos_dia_YYYY-MM-DD.pdf`. If no assets were registered today, an alert is shown instead.
+
+<Info>
+  The QR codes in this PDF use the same IDs scanned by the [QR Scanner](/features/scanner), so you can print the sheet and use it for physical inventory verification.
+</Info>
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="Asset Inventory" icon="box" href="/features/assets">
+    Create, edit, and delete assets. View the full filtered list.
+  </Card>
+  <Card title="QR Scanner" icon="scan" href="/features/scanner">
+    Scan asset QR codes to look up details and log movements.
+  </Card>
+  <Card title="Activity History" icon="clock" href="/features/history">
+    Full audit trail of every movement across all assets.
+  </Card>
+</CardGroup>

@@ -1,0 +1,104 @@
+---
+title: QR Scanner
+description: Use your device camera to scan asset QR codes and instantly retrieve asset details. Every scan is automatically logged as a movement in the activity history.
+---
+
+The **Lector de QR** page lets you identify any asset in seconds by pointing your camera at its QR code. The page is split into two panels: the camera view on the left and the asset details plus recent-scans list on the right.
+
+<Note>
+  Your browser will request camera access the first time you visit this page. You must grant permission for the scanner to work. If you deny the request, use the [manual fallback](#manual-fallback) instead.
+</Note>
+
+## Camera view
+
+When the page loads, the camera activates automatically using the rear-facing lens (`facingMode: 'environment'`). A blue rectangular frame is overlaid on the video feed to indicate the scanning area.
+
+**To scan an asset:**
+
+1. Point the camera at the asset's QR code.
+2. Align the code inside the blue frame.
+3. The scanner reads the code in real time (using the browser `BarcodeDetector` API when available, falling back to `jsQR` via canvas frame analysis).
+4. Once a code is detected, the camera stops and the asset data loads in the right panel.
+
+A status bar at the bottom of the camera area shows either *Alinea el código QR dentro del marco* while scanning, or *Codigo detectado: \{id\}* once a code is read.
+
+### Toggling the camera
+
+Click the **camera icon** button in the top-right corner of the video frame to turn the camera on or off. The icon changes to `CameraOff` when the camera is inactive. Toggling the camera off stops all active media tracks and releases the hardware.
+
+## Detected asset panel
+
+After a successful scan, the right panel displays the asset information retrieved from `GET /assets/activo/:id`:
+
+| Field | Description |
+|---|---|
+| Name | `nombre` |
+| ID | `id_activo` |
+| Category | `categoria` |
+| Encargado | `encargado` (first letter shown as avatar) |
+| Status | `estado` with color coding (green = Activo, yellow = Mantenimiento, red = Retirado) |
+
+### Viewing full details
+
+Click **Ver Detalles** to navigate to the asset's edit form at `/activos/editar/:id_activo`. This is the same form used in the [Asset Inventory](/features/assets) for editing.
+
+## Movement registration
+
+Every successful scan — whether via camera or manual entry — automatically logs a `Escaneo` movement record to the activity history. The movement is posted to `POST /movimientos` with:
+
+```json
+{
+  "tipo_movimiento": "Escaneo",
+  "fecha_movimiento": "<ISO timestamp>",
+  "descripcion": "Escaneo de activo <id>",
+  "id_usuario": "<logged-in user id from JWT>",
+  "id_activo": "<scanned asset id>"
+}
+```
+
+The user ID is extracted from the JWT access token stored in `authStorage`. After the movement is saved, the Recent Scans list refreshes automatically.
+
+## Manual fallback
+
+If the camera is unavailable or the QR code cannot be read optically, you can search by asset ID directly.
+
+<Steps>
+  <Step title="Locate the manual search bar">
+    Below the camera view, find the input labeled *ID del activo* with the note: *¿La cámara no funciona? Inserta el ID del activo de manera manual*.
+  </Step>
+  <Step title="Enter the asset ID">
+    Type the numeric asset ID into the text box.
+  </Step>
+  <Step title="Search">
+    Click the **Buscar** button (magnifying-glass icon). This sets the detected code to the entered value, triggering the same asset lookup and movement registration as a camera scan.
+  </Step>
+</Steps>
+
+## Recent scans list
+
+The **ESCANEOS RECIENTES** section below the asset panel shows the last 5 scan movements fetched from `GET /movimientos/tipo/escaneo`.
+
+Each entry displays:
+
+| Field | Description |
+|---|---|
+| Asset name | `nombre_activo` from the movement record |
+| Asset ID | `id_activo` |
+| Scan user | `nombre_usuario` who performed the scan |
+| Time | Scan time formatted as `HH:MM` in Mexico City locale |
+
+The list refreshes automatically after every new scan. Click **Ver Historial** at the bottom of the list to navigate to the full [Activity History](/features/history) page.
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="Asset inventory" icon="box" href="/features/assets">
+    Manage asset records and access the edit form for any asset.
+  </Card>
+  <Card title="Activity History" icon="clock" href="/features/history">
+    View all logged movements, including every Escaneo entry.
+  </Card>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    See top-level stats and recent activity across the inventory.
+  </Card>
+</CardGroup>

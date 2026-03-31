@@ -1,0 +1,89 @@
+---
+title: Category management
+description: Create and manage asset categories in Ophira Web to group fixed assets for filtering, reporting, and dashboard distribution charts.
+---
+
+Categories group assets into logical types (for example, `Electrónicos`, `Muebles`, or `Vehículos`). They are used throughout the platform to filter the asset list, populate the asset creation form, and break down the inventory in the Dashboard distribution chart.
+
+<Tip>
+  Use clear, specific category names that reflect your organization's asset types — for example, `Electrónicos`, `Muebles`, `Vehículos`, `Equipo de Cómputo`, or `Herramientas`. Well-named categories make reports and the distribution chart immediately readable for anyone reviewing inventory data.
+</Tip>
+
+## Where categories appear
+
+| Location | How categories are used |
+|---|---|
+| **Asset creation / edit form** | A dropdown lists all available categories. The selected category is stored with the asset record. |
+| **Asset list** | A filter lets users narrow the list to a single category. |
+| **Dashboard — Distribución por Categoría** | A donut chart shows each category's percentage share of the total asset count. Up to five color segments are rendered (blue, slate, emerald, amber, rose); additional categories cycle through the same palette. |
+| **Reports** | Category breakdowns appear in distribution and summary reports. |
+
+## Creating a category
+
+Categories are created from the Dashboard, not from a dedicated admin page.
+
+<Steps>
+  <Step title="Go to the Dashboard">
+    Navigate to the **Dashboard** (`/`). Locate the **Distribución por Categoría** card in the bottom-left section of the page.
+  </Step>
+  <Step title="Open the category form">
+    Click the **MoreVertical** (three-dot ⋮) icon in the top-right corner of the Distribución por Categoría card. A small panel labeled **Nueva categoría** slides open below the icon.
+  </Step>
+  <Step title="Fill in the category fields">
+    Enter values for both required fields:
+
+    | Field | Description |
+    |---|---|
+    | **Nombre** | Short, descriptive name for the category (required). Displayed in the asset form, filter bar, and reports. |
+    | **Descripción** | Brief explanation of what asset types belong to this category (required). |
+  </Step>
+  <Step title="Submit">
+    Click **Crear categoría**. The system posts to `POST /api/categorias` with `{ nombre, descripcion }`. A green success message — *"Categoria creada correctamente."* — confirms the category was saved. It is immediately available in the asset form's category dropdown and the dashboard chart.
+  </Step>
+</Steps>
+
+## Editing categories
+
+Category editing is managed through the Dashboard panel. Open the same MoreVertical menu on the Distribución por Categoría card to access available management options for existing categories.
+
+## Deleting categories
+
+<Warning>
+  Categories cannot be deleted if any assets are currently assigned to them. Attempting to delete a category that has associated assets will fail due to a foreign key constraint in the database. Reassign or remove all assets in the category before deleting it.
+</Warning>
+
+Category deletion is handled through the Dashboard management panel. Before deleting a category, verify in the **Distribución por Categoría** chart that the category shows `0%` (no assets assigned).
+
+## Dashboard distribution chart
+
+The donut chart on the Dashboard calculates category distribution in real time from the loaded asset list:
+
+- Each category's **percentage** = `(count of assets in category / total assets) × 100`, rounded to the nearest integer.
+- Categories are sorted from highest to lowest percentage.
+- Assets without a category are grouped under **Sin categoría**.
+- The chart renders up to five distinct color segments and cycles back through the palette for any additional categories.
+
+## API endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/categorias` | Create a new category |
+
+All requests require a valid Bearer token in the `Authorization` header.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    The entry point for creating categories and viewing the distribution chart.
+  </Card>
+  <Card title="Assets" icon="package" href="/features/assets">
+    Assign a category to each asset record via the category dropdown.
+  </Card>
+  <Card title="Reports" icon="chart-bar" href="/reports/overview">
+    View category-based breakdowns and distribution summaries.
+  </Card>
+  <Card title="Locations" icon="map-pin" href="/admin/locations">
+    Manage the physical location hierarchy alongside categories.
+  </Card>
+</CardGroup>

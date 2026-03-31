@@ -1,0 +1,110 @@
+{
+  "projectType": "saas",
+  "projectName": "Ophira Web",
+  "projectDescription": "A fixed asset management web platform for tracking inventory, auditing assets by location, scanning QR codes, and generating reports.",
+  "theme": "luma",
+  "primaryColor": "#2563eb",
+  "lightColor": "#eff6ff",
+  "darkColor": "#1e3a8a",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/dashboard",
+              "features/assets",
+              "features/scanner",
+              "features/audits",
+              "features/history"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "admin/users",
+              "admin/locations",
+              "admin/categories"
+            ]
+          },
+          {
+            "group": "Reports & Exports",
+            "pages": [
+              "reports/overview",
+              "reports/exporting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer Guide",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "dev/architecture",
+              "dev/api-client",
+              "dev/routing"
+            ]
+          },
+          {
+            "group": "Setup & Deployment",
+            "pages": [
+              "dev/setup",
+              "dev/environment",
+              "dev/deployment"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Asset inventory management with CRUD operations",
+    "QR code scanning for instant asset lookup",
+    "Audit tracking with location-based reviews",
+    "Activity history and movement logs",
+    "PDF and Excel report exports",
+    "User management with role-based access (Admin, Auditor, Supervisor, User)",
+    "Location hierarchy: buildings, floors, and classrooms",
+    "Dark/light theme support",
+    "JWT-based authentication with optional persistent sessions",
+    "Dashboard with real-time statistics and category distribution charts"
+  ],
+  "publicApiSurface": [
+    "GET /api/assets/activos — list all assets",
+    "GET /api/assets/activo/:id — get a single asset by ID",
+    "GET /api/assets/dashboard — dashboard summary stats",
+    "GET /api/assets/reporte — report data with monthly breakdown",
+    "POST /api/assets — create asset",
+    "PUT /api/assets/:id — update asset",
+    "DELETE /api/assets/:id — delete asset",
+    "GET /api/categorias — list categories",
+    "POST /api/categorias — create category",
+    "GET /api/ubicacion/edificio — list buildings",
+    "POST /api/ubicacion/edificio — create building",
+    "GET /api/ubicacion/piso/:edificioId — get floors for a building",
+    "POST /api/ubicacion/piso — create floor",
+    "GET /api/ubicacion/aula/:pisoId — get rooms for a floor",
+    "POST /api/ubicacion/aula — create room",
+    "GET /api/usuarios — list users",
+    "POST /api/usuarios — create user",
+    "PUT /api/usuarios/:id — update user",
+    "DELETE /api/usuarios/:id — delete user",
+    "GET /api/auditorias — list audits",
+    "GET /api/auditorias/:id — get audit details",
+    "GET /api/movimientos — list all movements (history)",
+    "GET /api/movimientos/tipo/escaneo — list scan movements",
+    "POST /api/movimientos — create movement"
+  ]
+}

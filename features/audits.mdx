@@ -1,0 +1,118 @@
+---
+title: Audits
+description: Review and track physical asset audits conducted by users across rooms. Each audit records which assets were found, their condition, and any observations from the auditor.
+---
+
+The **Auditorías de Activos** page gives you centralized visibility into all room-level asset audits. Audits are created externally (for example, from a mobile auditing app) and listed here for review. You can filter, search, and drill into the full detail of any audit.
+
+## Audit list
+
+The table loads all audits from `GET /auditorias` and displays them in reverse-chronological order. The columns are:
+
+| Column | Source fields |
+|---|---|
+| **ID Auditoría** | `id_auditoria` |
+| **Usuario** | Full name: `nombre_usuario` (or `nombre`) + `apellido_paterno`; position: `puesto de area` |
+| **Fecha** | `fecha_auditoria` \| `fecha_registro` \| `created_at` formatted as `DD MMM YYYY` |
+| **Hora** | Same timestamp formatted as `HH:MM` |
+| **Aula** | `id_aula` |
+| **Estado** | `estado_general`; shown as *Sin definir* when the field is null or empty |
+| **Acciones** | **Ver Detalles** button |
+
+A footer below the table displays the count: *Mostrando X de Y auditorías*.
+
+### Status values
+
+The `estado_general` field is stored as free text set by the auditing client. Common values are:
+
+| Value | Meaning |
+|---|---|
+| Finalizada | The audit is complete and all assets have been verified |
+| En progreso | The auditor is still working through the room |
+| Pendiente | The audit has been scheduled but not started |
+| Sin definir | No status was set at the time of creation |
+
+## Filters
+
+<AccordionGroup>
+  <Accordion title="Search bar">
+    Searches the combined text of `id_auditoria`, `nombre_usuario`, `nombre`, `apellido_paterno`, and `apellido_materno`. The search is case-insensitive and updates the visible rows in real time. Placeholder: *Buscar por ID de auditoría o nombre de usuario…*
+  </Accordion>
+  <Accordion title="Date filter">
+    A dropdown with three options:
+
+    | Option | Behavior |
+    |---|---|
+    | **Todas** | Shows all audits regardless of date |
+    | **Esta semana** | Shows audits whose date falls within the last 7 days |
+    | **Este mes** | Shows audits whose date falls in the current calendar month and year |
+
+    If the audit record has no parseable date, it is always included regardless of the selected date filter.
+  </Accordion>
+</AccordionGroup>
+
+Both filters combine with AND logic.
+
+## Audit detail page
+
+Click **Ver Detalles** (eye icon) on any row to navigate to `/auditorias/:id_auditoria`. The detail page loads from `GET /auditorias/:id` and shows a full breakdown of that single audit.
+
+### Summary cards
+
+Four info cards appear at the top of the detail page:
+
+| Card | Content |
+|---|---|
+| **Fecha** | Audit date formatted as `DD MMM YYYY` |
+| **Auditor Responsable** | Full name and position/area of the auditor |
+| **Ubicación** | Room label: *Aula \{id_aula\}* |
+| **Estado General** | Current audit status with color indicator |
+
+### Verified assets table
+
+Below the summary cards, a table lists every asset that was checked during the audit. The data comes from the `estados_activos` field of the audit record (parsed from JSON).
+
+| Column | Description |
+|---|---|
+| **ID Activo** | Asset ID; responsible party shown below |
+| **Nombre del Activo** | Asset name and category |
+| **Hallado** | Green checkmark if found; red X if not found |
+| **Estado del Activo** | Asset condition at time of audit (color-coded) |
+| **Observaciones** | Auditor's notes for this asset |
+
+Asset status color coding in the detail view:
+
+| Status | Color |
+|---|---|
+| Activo | Green |
+| Mantenimiento | Yellow |
+| Retirado / Baja / faltante | Red |
+| En progreso | Yellow |
+| Other | Slate |
+
+A footer row summarizes the counts: **X Localizados** (green dot) and **Y Faltantes** (red dot).
+
+### Exporting an audit report
+
+Click **Exportar Reporte** (download icon) on the detail page to generate a landscape A4 PDF containing:
+
+- Audit ID, date, auditor name, room, and overall status
+- Total assets count, localizados count, and faltantes count
+- General observations
+- A full table of all verified assets with columns: ID Activo, Nombre, Categoria, Hallado, Estado del Activo, Observaciones
+
+The file is saved as `auditoria_\{id_auditoria\}.pdf`.
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="Asset inventory" icon="box" href="/features/assets">
+    View and manage the assets that appear in audit records.
+  </Card>
+  <Card title="Activity History" icon="clock" href="/features/history">
+    See all movements associated with audited assets.
+  </Card>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    Overview metrics including assets by status and category.
+  </Card>
+</CardGroup>

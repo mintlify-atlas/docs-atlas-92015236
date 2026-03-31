@@ -1,0 +1,131 @@
+---
+title: User management
+description: Create, edit, and delete user accounts in Ophira Web. Control access by assigning roles and positions to each person in your organization.
+---
+
+<Warning>
+  Only users with the **Administrador** role can access the User Management section and perform create, edit, or delete operations.
+</Warning>
+
+## User list
+
+Navigate to **Gestión de Usuarios** from the sidebar to see all registered accounts. The table displays up to the full user list and can be scrolled vertically.
+
+| Column | Source field | Description |
+|---|---|---|
+| **Usuario** | `nombre_usuario` + `apellido_paterno` + `apellido_materno` + `id_usuario` | Full name (clickable) and numeric ID below |
+| **Email** | `correo` | Contact email address |
+| **Teléfono** | `telefono` | Phone number |
+| **Rol** | `rol` | Assigned role (Administrador, Supervisor, Auditor, or Usuario) |
+| **Puesto** | `puesto` — `area` | Job title and department, shown as "Puesto - Area" |
+| **Estado** | `activo` | **Activo** (green) or **Inactivo** (red) |
+| **Fecha Registro** | `fecha_registro` | Registration date formatted as day/month/year (es-MX locale) |
+| **Acciones** | — | Edit (pencil) and Delete (trash) icon buttons |
+
+Clicking the user's name navigates to their full profile at `/perfil/:id`.
+
+## Searching and filtering
+
+The filter bar above the table provides two controls:
+
+- **Search box** — Type any part of the user's full name or email address. The list updates in real time as you type.
+- **Role dropdown** — Select **Todos los roles**, **Administrador**, **Auditor**, **Usuario**, or **Supervisor** to restrict the list to a single role.
+
+Both filters apply simultaneously, so you can search for "López" within the Auditor role, for example.
+
+## Roles and permissions
+
+<Warning>
+  The current web application only allows users with the **Administrador** role to log in. Accounts assigned other roles are blocked at the login guard and redirected to the login page. Other roles are available in the system for future use or for integrations with other clients (such as a mobile auditing app).
+</Warning>
+
+<AccordionGroup>
+  <Accordion title="Administrador">
+    Full access to the entire platform: user management, asset CRUD, location and category administration, audit management, and all reports. This is the only role that can currently log in to the web application and create, edit, or delete records.
+  </Accordion>
+  <Accordion title="Supervisor">
+    Defined in the system for future use. Intended for managing assets and audit workflows. Currently blocked from web app access by the protected route guard.
+  </Accordion>
+  <Accordion title="Auditor">
+    Defined in the system for future use. Intended for conducting and recording audits using the QR scanner. Currently blocked from web app access.
+  </Accordion>
+  <Accordion title="Usuario">
+    Defined in the system for future use. Intended for standard read access to assets and dashboard. Currently blocked from web app access.
+  </Accordion>
+</AccordionGroup>
+
+## Creating a user
+
+<Steps>
+  <Step title="Open the new user form">
+    Click the **Nuevo Usuario** button (top-right of the Users page). The form opens at route `/usuarios/nuevo`.
+  </Step>
+  <Step title="Fill in the personal fields">
+    Complete all required fields in the form:
+
+    | Field | Field name | Required |
+    |---|---|---|
+    | Nombre | `nombre_usuario` | Yes |
+    | Apellido Paterno | `apaterno_usuario` | Yes |
+    | Apellido Materno | `amaterno_usuario` | No |
+    | Correo Electrónico | `correo_usuario` | Yes |
+    | Contraseña | `pwd_usuario` | Yes (create only) |
+    | Teléfono | `telefono_usuario` | No |
+    | Fecha de Registro | auto-set on save | Read-only |
+  </Step>
+  <Step title="Select the role and position">
+    Choose the user's **Rol** and **Puesto** from the respective dropdowns. Both lists are loaded from the API (`/api/roles` and `/api/puestos`). Each position entry is shown as "Puesto - Area" so you can identify the department.
+
+    <Note>
+      If the role, area, or position you need does not yet exist, expand the **Catálogos Rápidos** panel at the top of the form. Use the **Nuevo rol**, **Nueva area**, or **Nuevo puesto** buttons to create them inline without leaving the page.
+    </Note>
+  </Step>
+  <Step title="Save the user">
+    Click **Crear Usuario**. The form submits a `POST` to `/api/usuarios` and navigates back to the user list on success.
+  </Step>
+</Steps>
+
+## Editing a user
+
+<Steps>
+  <Step title="Open the edit form">
+    In the user list, click the **Edit** icon (pencil) in the Actions column of the row you want to update. The app navigates to `/usuarios/editar/:id` with the user's current data pre-filled.
+  </Step>
+  <Step title="Modify the fields">
+    All fields are editable. For the **Contraseña** field: if you leave it unchanged (or enter the same value as before), the password is not updated. To change the password, type a new value.
+
+    The **Activo / Inactivo** checkbox is only visible in edit mode. Toggle it to activate or deactivate the account without deleting the record.
+  </Step>
+  <Step title="Save the changes">
+    Click **Guardar Cambios**. The form submits a `PUT` to `/api/usuarios/:id` and returns to the user list.
+  </Step>
+</Steps>
+
+## Deleting a user
+
+<Steps>
+  <Step title="Open the delete confirmation">
+    Click the **Delete** icon (trash) in the Actions column of the target user. The app navigates to `/usuarios/eliminar/:id` with all fields shown in read-only mode.
+  </Step>
+  <Step title="Review the user record">
+    Verify the displayed data to confirm you are deleting the correct account. The page title shows "Eliminar Usuario" and the subtitle reads: *"Al eliminar este usuario se eliminarán todos sus datos y registros"*.
+  </Step>
+  <Step title="Confirm deletion">
+    Click **Eliminar Usuario** (red button). A browser confirmation dialog asks for final approval. Click OK to proceed.
+  </Step>
+</Steps>
+
+<Note>
+  If you want to preserve a user's audit trail and records while preventing them from logging in, set the account to **Inactivo** instead using the edit form. Toggle the **Activo** checkbox off and save.
+</Note>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    Overview of asset statistics and quick-access actions.
+  </Card>
+  <Card title="Assets" icon="package" href="/features/assets">
+    Browse and manage fixed asset records.
+  </Card>
+</CardGroup>

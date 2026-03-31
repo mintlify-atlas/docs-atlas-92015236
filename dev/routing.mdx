@@ -1,0 +1,210 @@
+---
+title: Routing
+description: Client-side route structure for Ophira Web, including public routes, protected routes, and the CRUD state-passing pattern.
+---
+
+Ophira Web uses React Router DOM 7 with `BrowserRouter`. All navigation is client-side; the server only needs to serve `index.html` for every path.
+
+## Route tree
+
+The complete route definition lives in `src/App.jsx`:
+
+```jsx
+// src/App.jsx
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/protectedRoute';
+
+// Page imports (abbreviated)
+import Login from './pages/login';
+import Dashboard from './pages/dashboard';
+import Activos from './pages/Activos';
+import VerActivo from './pages/crudActivos/verActivo';
+import Scanner from './pages/Scanner';
+import Reportes from './pages/Reportes';
+import Historial from './pages/Historial';
+import Auditorias from './pages/Auditorias';
+import DetallesAuditoria from './pages/DetallesAuditoria';
+import Usuarios from './pages/Usuarios';
+import CrearUsuario from './pages/crudUsuarios/verUsuario';
+import Perfil from './pages/Perfil';
+
+function App() {
+  return (
+    <ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Protected — requires token + rol === 1 */}
+          <Route element={<ProtectedRoute />}>
+            <Route path='/*' element={
+              <Layout>
+                <Routes>
+                  <Route path="/dashboard"            element={<Dashboard />} />
+                  <Route path="/activos"              element={<Activos />} />
+                  <Route path="/activos/nuevo"        element={<VerActivo />} />
+                  <Route path="/activos/editar/:id"   element={<VerActivo />} />
+                  <Route path="/activos/eliminar/:id" element={<VerActivo />} />
+                  <Route path="/scanner"              element={<Scanner />} />
+                  <Route path="/reportes"             element={<Reportes />} />
+                  <Route path="/historial"            element={<Historial />} />
+                  <Route path="/auditorias"           element={<Auditorias />} />
+                  <Route path="/auditorias/:id"       element={<DetallesAuditoria />} />
+                  <Route path="/usuarios"             element={<Usuarios />} />
+                  <Route path="/usuarios/nuevo"       element={<CrearUsuario />} />
+                  <Route path="/usuarios/ver/:id"     element={<CrearUsuario />} />
+                  <Route path="/usuarios/editar/:id"  element={<CrearUsuario />} />
+                  <Route path="/usuarios/eliminar/:id" element={<CrearUsuario />} />
+                  <Route path="/perfil"               element={<Perfil />} />
+                  <Route path="/perfil/:id"           element={<Perfil />} />
+                  <Route path="/"                     element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </Layout>
+            }/>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+```
+
+## Public routes
+
+| Path | Component | Notes |
+|---|---|---|
+| `/login` | `Login` | Unauthenticated entry point. Calls `saveToken` on success. |
+
+## Protected routes
+
+All routes below `/` require a valid JWT with `rol === 1`. The `ProtectedRoute` component enforces this before `Layout` is rendered. See [architecture — ProtectedRoute](/dev/architecture#protectedroute) for the guard implementation.
+
+### Main sections
+
+| Path | Component | Feature page |
+|---|---|---|
+| `/dashboard` | `Dashboard` | [Dashboard](/features/dashboard) |
+| `/activos` | `Activos` | [Assets](/features/assets) |
+| `/scanner` | `Scanner` | [Scanner](/features/scanner) |
+| `/reportes` | `Reportes` | [Reports](/reports/overview) |
+| `/historial` | `Historial` | [History](/features/history) |
+| `/auditorias` | `Auditorias` | [Audits](/features/audits) |
+| `/auditorias/:id` | `DetallesAuditoria` | Audit detail view |
+| `/usuarios` | `Usuarios` | [Users](/admin/users) |
+| `/perfil` | `Perfil` | Current user's profile |
+| `/perfil/:id` | `Perfil` | Any user's profile (by id) |
+| `/` | — | Redirects to `/dashboard` |
+
+### Asset CRUD routes
+
+All three mutation routes render the same `VerActivo` component. The component reads `location.state` to determine which mode it is operating in.
+
+| Path | Mode | Action |
+|---|---|---|
+| `/activos/nuevo` | `crear` | Empty form — creates a new asset |
+| `/activos/editar/:id` | `editar` | Pre-filled form — updates the asset |
+| `/activos/eliminar/:id` | `eliminar` | Confirmation view — deletes the asset |
+
+### User CRUD routes
+
+The same pattern applies to user management. All four routes render `CrearUsuario` (imported from `pages/crudUsuarios/verUsuario.jsx`).
+
+| Path | Mode | Action |
+|---|---|---|
+| `/usuarios/nuevo` | `crear` | Empty form — creates a new user |
+| `/usuarios/ver/:id` | `ver` | Read-only view of user data |
+| `/usuarios/editar/:id` | `editar` | Pre-filled form — updates the user |
+| `/usuarios/eliminar/:id` | `eliminar` | Confirmation view — deletes the user |
+
+## Passing mode and data via Router state
+
+Rather than fetching the entity again on the form page, the list or detail page passes the already-loaded data through React Router's `location.state`. This avoids a redundant API call and keeps the form page stateless with respect to data loading.
+
+### Navigate call pattern
+
+```jsx
+import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
+
+const Activos = () => {
+  const navigate = useNavigate();
+
+  const handleEditar = (activo) => {
+    navigate(`/activos/editar/${activo.id}`, {
+      state: { modo: 'editar', activo },
+    });
+  };
+
+  const handleEliminar = (activo) => {
+    navigate(`/activos/eliminar/${activo.id}`, {
+      state: { modo: 'eliminar', activo },
+    });
+  };
+
+  const handleNuevo = () => {
+    navigate('/activos/nuevo', {
+      state: { modo: 'crear' },
+    });
+  };
+  // ...
+};
+```
+
+### Reading state in the form component
+
+```jsx
+import { useLocation, useParams } from 'react-router-dom';
+
+const VerActivo = () => {
+  const { id } = useParams();
+  const location = useLocation();
+  const { modo, activo } = location.state ?? {};
+
+  // modo is 'crear' | 'editar' | 'eliminar'
+  // activo contains the full asset object when modo !== 'crear'
+  // ...
+};
+```
+
+<Info>
+  If a user navigates directly to `/activos/editar/42` without going through the list (e.g. by typing the URL), `location.state` will be `null`. Each form component should handle this gracefully — typically by fetching the entity from the API using the `:id` URL parameter as a fallback.
+</Info>
+
+## Nesting and layout
+
+The protected subtree uses a `path='/*'` wildcard route that wraps `<Layout>` around a nested `<Routes>`. This means:
+
+- `ProtectedRoute` renders `<Outlet />`, which resolves to the `path='/*'` route.
+- `Layout` renders `<Slidebar />` and the `<main>` area once for all protected pages.
+- The inner `<Routes>` matches the remainder of the URL after `/`.
+
+```
+BrowserRouter
+└── Routes
+    ├── /login                   (public)
+    └── ProtectedRoute <Outlet>
+        └── /*
+            └── Layout
+                └── Routes       (inner router)
+                    ├── /dashboard
+                    ├── /activos
+                    ├── /activos/nuevo
+                    └── ...
+```
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="Architecture" icon="building" href="/dev/architecture">
+    ProtectedRoute, Layout, and ThemeContext internals.
+  </Card>
+  <Card title="Assets" icon="package" href="/features/assets">
+    Asset list and CRUD workflow.
+  </Card>
+  <Card title="Users" icon="users" href="/admin/users">
+    User management pages.
+  </Card>
+</CardGroup>

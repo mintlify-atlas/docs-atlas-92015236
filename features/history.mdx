@@ -1,0 +1,102 @@
+---
+title: Activity history
+description: A complete, filterable log of every movement recorded against your fixed assets — including depreciation runs, write-offs, updates, and QR scans.
+---
+
+The **Historial de Actividad** page is the single source of truth for everything that has happened to your assets. Every movement created by any user or automated process appears here, with full context about who performed the action, which asset was affected, and what changed.
+
+## Movement table
+
+Movement records are loaded from `GET /movimientos`. Each row represents one movement event.
+
+| Column | Source fields |
+|---|---|
+| **Fecha** | `fecha_movimiento` formatted as `DD MMM YYYY` with time `HH:MM` below |
+| **Usuario Movimiento** | User who logged the movement: `nombre_usuario + apellido_paterno`; `puesto de area` below |
+| **Responsable del Activo** | Asset's responsible party: `responsable + responsable_apellido`; `responsable_puesto_activo de responsable_area_activo` below |
+| **ID Activo** | `id_activo` shown in monospace blue |
+| **Nombre del Activo** | `nombre_activo` with `categoria_activo` shown below |
+| **Movimiento** | Movement type (`tipo_movimiento`) with color coding |
+| **Descripción** | `descripcion` from the movement record |
+
+A footer below the table shows: *Mostrando X de Y movimientos*.
+
+### Movement type color coding
+
+| Movement type | Color |
+|---|---|
+| Depreciacion | Yellow |
+| Baja | Red |
+| Actualizacion | Blue |
+| All other types (e.g. Escaneo, Creacion, Transferencia) | Green |
+
+Color matching is case-insensitive against the lowercase `tipo_movimiento` value.
+
+## Filters
+
+Three filter controls appear in a panel above the table:
+
+<AccordionGroup>
+  <Accordion title="Search bar">
+    A single text input that searches across all of the following fields simultaneously:
+
+    - Movement ID (`id`)
+    - Asset ID (`idActivo`, `assetId`)
+    - Movement user name, position, and area
+    - Asset responsible name, position, and area
+    - Asset name (`nombreActivo`)
+    - Asset category (`categoriaActivo`)
+    - Movement type (`accion`)
+
+    The search is case-insensitive and filters in real time. Placeholder: *Buscar por usuario movimiento o ID activo*.
+  </Accordion>
+  <Accordion title="Action filter">
+    A dropdown populated dynamically from the unique movement types present in the loaded data. The first option is always **Todas las Acciones**, which disables type filtering. Selecting a specific type such as *Escaneo* or *Depreciacion* shows only rows of that type. Matching is case-insensitive.
+  </Accordion>
+  <Accordion title="Date picker">
+    A date input that filters rows to a single calendar date. The date is matched against the `fechaClave` value (normalized to `YYYY-MM-DD`). Click the calendar icon or the input itself to open the native date picker. Leave the field empty to show movements on all dates.
+  </Accordion>
+</AccordionGroup>
+
+All three filters combine with AND logic: a row must satisfy every active filter to appear.
+
+### Clearing filters
+
+Click **Limpiar Filtros** (top-right of the filter panel) to reset all three filters simultaneously:
+- Search term → empty
+- Action filter → *Todas las Acciones*
+- Date picker → empty (no date selected)
+
+## Refreshing data
+
+Click the **Refrescar** button (refresh icon) in the page header to reload the page and pull the latest movements from the server. This is a full page reload (`window.location.reload()`), not a background fetch.
+
+<Tip>
+  Use Refresh after performing bulk operations — such as running a depreciation job — to ensure all newly created movement records appear in the table.
+</Tip>
+
+## Exporting to PDF
+
+Click **Exportar PDF** (download icon) in the page header to generate a landscape A4 PDF from the currently filtered movements.
+
+The PDF contains two sections:
+
+1. **Bar chart** — a visual summary of movement counts grouped by type. Each bar is labeled with its count and type name. The chart is drawn programmatically using `jsPDF` primitives (no external chart library).
+
+2. **Detail table** — a full tabular listing of all filtered rows with columns: Fecha, Usuario, Responsable Activo, ID Activo, Nombre, Categoría, Movimiento, Descripcion.
+
+The file is saved as `historial_YYYY-MM-DD.pdf`. If the filtered list is empty, the export is silently skipped.
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="QR Scanner" icon="scan" href="/features/scanner">
+    Scans create Escaneo movement entries visible in this log.
+  </Card>
+  <Card title="Asset inventory" icon="box" href="/features/assets">
+    Creating, editing, or deleting assets generates movement records.
+  </Card>
+  <Card title="Audits" icon="clipboard-check" href="/features/audits">
+    View room-level audits that reference assets tracked here.
+  </Card>
+</CardGroup>

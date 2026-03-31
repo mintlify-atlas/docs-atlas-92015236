@@ -1,0 +1,123 @@
+---
+title: Location management
+description: Define the physical hierarchy of buildings, floors, and rooms used to assign locations to fixed assets in Ophira Web.
+---
+
+Ophira Web organizes physical space as a three-level hierarchy:
+
+**Edificio (Building)** → **Piso (Floor)** → **Aula (Room)**
+
+Every asset is assigned to a specific room. The cascading dropdowns on the asset form (building → floor → room) reflect this structure, so all three levels must exist before an asset can be located.
+
+<Note>
+  You must create a building before you can add floors to it, and floors before you can add rooms. Follow the order: building → floor → room.
+</Note>
+
+## Opening the location manager
+
+Location management is accessed directly from the Dashboard:
+
+1. Go to the **Dashboard** (`/`).
+2. Click the **Nueva Ubicacion** button in the top-right toolbar (next to "Nuevo Activo").
+3. A dropdown panel labeled **Gestión de Ubicaciones** appears.
+4. Use the three tab buttons — **Nuevo edificio**, **Nuevo piso**, **Nueva aula** — to switch between creation forms.
+
+The panel stays open until you click the **×** close button or dismiss it.
+
+## Creating a building
+
+<Steps>
+  <Step title="Select the Edificio tab">
+    In the Gestión de Ubicaciones panel, click **Nuevo edificio**. This tab is active by default when the panel opens.
+  </Step>
+  <Step title="Fill in the building fields">
+    Complete all four fields:
+
+    | Field | Description |
+    |---|---|
+    | **Clave** | Short code used to identify the building (e.g., `A`, `B`, `LAB`). |
+    | **Nombre** | Full descriptive name of the building (e.g., `Edificio Administrativo`). |
+    | **Cantidad de Pisos** | Total number of floors in the building (must be greater than 0). This number determines which floor numbers are available when adding floors. |
+    | **Dirección** | Street address or physical location description. |
+  </Step>
+  <Step title="Submit">
+    Click **Crear edificio**. The system posts to `POST /api/ubicacion/edificio`. On success, a green confirmation message appears and the building becomes available in the floor and room dropdowns immediately.
+  </Step>
+</Steps>
+
+## Creating a floor
+
+<Steps>
+  <Step title="Select the Piso tab">
+    In the Gestión de Ubicaciones panel, click **Nuevo piso**.
+  </Step>
+  <Step title="Select the building">
+    Choose the target building from the **Selecciona edificio** dropdown. The list shows all existing buildings by name.
+  </Step>
+  <Step title="Select the floor number">
+    The **Numero de piso** dropdown is populated with options from 1 up to the building's `cantidad_pisos` value. Select the floor you want to create (e.g., `Piso 3`).
+  </Step>
+  <Step title="Select the number of rooms">
+    Choose the **Cantidad de aulas** for this floor from the dropdown, which supports 1 to 60 rooms.
+  </Step>
+  <Step title="Submit">
+    Click **Crear piso**. The system posts to `POST /api/ubicacion/piso` with `id_edificio`, `numero_piso`, and `cantidad_aulas`. A success message confirms the floor was created.
+  </Step>
+</Steps>
+
+## Creating a room
+
+<Steps>
+  <Step title="Select the Aula tab">
+    In the Gestión de Ubicaciones panel, click **Nueva aula**.
+  </Step>
+  <Step title="Select the building">
+    Choose a building from the first dropdown. This triggers a load of all floors belonging to that building.
+  </Step>
+  <Step title="Select the floor">
+    The **Selecciona piso** dropdown is enabled once a building is chosen. Select the floor where the room is located.
+  </Step>
+  <Step title="Select the room number">
+    The **Numero de aula** dropdown is populated with room slots from 1 up to the floor's `cantidad_aulas`. Room numbers below 10 are zero-padded to two digits (e.g., `01`, `02`, ..., `09`, `10`, `11`).
+  </Step>
+  <Step title="Set the room type">
+    The **Tipo** field defaults to `Aula`. You can replace it with any freeform text to describe the space, such as `Laboratorio`, `Oficina`, `Sala de Reuniones`, or `Almacén`.
+  </Step>
+  <Step title="Submit">
+    Click **Crear aula**. The system posts to `POST /api/ubicacion/aula` with `id_piso`, `numero_aula`, and `tipo`. A success message confirms the room was created.
+  </Step>
+</Steps>
+
+## Using locations on assets
+
+When creating or editing an asset, the location field uses a cascading three-dropdown selector:
+
+1. **Edificio** — Select the building. The floor dropdown is empty until a building is chosen.
+2. **Piso** — Select the floor within that building. Available floors are loaded from `GET /api/ubicacion/piso/:edificioId`.
+3. **Aula** — Select the specific room. Available rooms are loaded from `GET /api/ubicacion/aula/:pisoId`.
+
+All three levels must be selected to assign a valid location to an asset. The asset record stores the `id_aula` (room ID) as its location reference.
+
+## API endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/ubicacion/edificio` | List all buildings |
+| `POST` | `/api/ubicacion/edificio` | Create a building |
+| `GET` | `/api/ubicacion/piso/:edificioId` | List floors for a building |
+| `POST` | `/api/ubicacion/piso` | Create a floor |
+| `GET` | `/api/ubicacion/aula/:pisoId` | List rooms for a floor |
+| `POST` | `/api/ubicacion/aula` | Create a room |
+
+All requests require a valid Bearer token in the `Authorization` header.
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    The starting point for location and category management.
+  </Card>
+  <Card title="Assets" icon="package" href="/features/assets">
+    Assign locations to fixed assets using the cascading dropdowns.
+  </Card>
+</CardGroup>

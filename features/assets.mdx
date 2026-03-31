@@ -1,0 +1,145 @@
+---
+title: Asset inventory
+description: Browse, search, filter, and manage every fixed asset registered in Ophira Web. Create new assets, edit existing records, delete retired items, and export the filtered list to PDF.
+---
+
+The **Inventario de Activos** page is your central register for all fixed assets. Every asset record stores financial, physical, and organizational data and is linked to a location (aula), a responsible user, and a category.
+
+## Asset list
+
+The table loads all assets from `GET /assets/activos` and supports scrolling within a fixed-height viewport. The columns are:
+
+| Column | Description |
+|---|---|
+| **ACTIVO ID** | Unique numeric identifier (`id_activo`) |
+| **NOMBRE** | Asset name with the responsible party's full name, position, and area shown below |
+| **CATEGORIA** | Asset category name |
+| **UBICACION** | Room identifier (`aula`) |
+| **ESTADO** | Current status with color coding (see below) |
+| **FECHA REGISTRO** | Registration date formatted as `YYYY-MM-DD` |
+| **ACCIONES** | Edit and Delete icon buttons |
+
+### Status color coding
+
+| Status | Color |
+|---|---|
+| Activo | Green |
+| Mantenimiento | Yellow |
+| Retirado | Red |
+
+The responsible-party line under the asset name is composed as:
+`nombre + apellido` — `puesto de area`
+
+If an asset has multiple parts (`multiparte = true`), each part's number, description, and room are listed below the name.
+
+## Filters
+
+Three filter controls appear above the table in a single row:
+
+<AccordionGroup>
+  <Accordion title="Search bar">
+    Searches across three fields simultaneously: `id_activo`, `nombre`, and `responsable`. The search is case-insensitive and updates in real time as you type. Placeholder text: *Buscar por ID o nombre*.
+  </Accordion>
+  <Accordion title="Category filter">
+    A dropdown populated from `GET /categorias`. Select a specific category or leave it on **Todas las categorías** to show all. Matching is case-insensitive against the category name.
+  </Accordion>
+  <Accordion title="Status filter">
+    A dropdown built dynamically from the unique `estado` values present in the loaded data. Options: **Todos los estados** plus any status found in the response (e.g. Activo, Mantenimiento, Retirado).
+  </Accordion>
+</AccordionGroup>
+
+All three filters combine with AND logic: an asset must satisfy every active filter to appear in the results.
+
+## Creating a new asset
+
+<Steps>
+  <Step title="Open the form">
+    Click **Nuevo Activo** in the top-right header. You are navigated to the `VerActivo` form at `/activos/nuevo` with `modo = crear`.
+  </Step>
+  <Step title="Fill in the asset fields">
+    Complete all required fields:
+
+    | Field | Type | Notes |
+    |---|---|---|
+    | Nombre del Activo | Text | Required |
+    | Número de Serie | Text | Required |
+    | Modelo | Text | Required |
+    | Fecha de Compra | Date | Required |
+    | Precio de Compra | Number (MXN) | Required |
+    | Valor Actual | Number (MXN) | Required |
+    | Valor Residual | Number (MXN) | Required |
+    | Vida Útil (años) | Number | Required |
+    | Categoría | Select | Loaded from `GET /categorias` |
+    | Método de Depreciación | Select | Loaded from `GET /metodos-depreciacion` |
+    | Estado | Select | Loaded from `GET /estados-activo` |
+    | Aula en que se ubica | Select | Loaded from `GET /ubicacion/aulas` |
+    | Responsable | Select | Loaded from `GET /usuarios`; shown as `nombre - puesto de area` |
+    | Descripción | Textarea | Required |
+  </Step>
+  <Step title="Enable multipart (optional)">
+    Check **Este activo es multiparte** if the asset spans multiple rooms. A parts panel appears where you can add one or more parts, each with a description and a room (`id_aula`). Use **Agregar otra parte** to add rows and the X button to remove them.
+  </Step>
+  <Step title="Submit">
+    Click **Crear**. The form posts to `POST /assets`. On success, a modal dialog appears showing the new asset's ID and a downloadable QR code. You can then go back or navigate to the inventory.
+  </Step>
+</Steps>
+
+<Note>
+  After creation, the QR code shown in the modal encodes the new `id_activo`. Print it and attach it to the physical asset so it can be scanned later from the [QR Scanner](/features/scanner).
+</Note>
+
+## Editing an asset
+
+<Steps>
+  <Step title="Open the edit form">
+    Click the **Edit** icon (pencil) in the Actions column for the asset you want to modify. You are navigated to `/activos/editar/:id` with `modo = editar` and the existing asset data pre-populated.
+  </Step>
+  <Step title="Modify fields">
+    All fields from the create form are editable. The QR code for the asset is shown in a sticky panel on the right side of the form for reference.
+  </Step>
+  <Step title="Save">
+    Click **Guardar Activo**. The form sends `PUT /assets/:id`. On success you are returned to the previous page.
+  </Step>
+</Steps>
+
+## Deleting an asset
+
+<Steps>
+  <Step title="Open the delete confirmation">
+    Click the **Delete** icon (trash) in the Actions column. You are navigated to `/activos/eliminar/:id` with `modo = eliminar`.
+  </Step>
+  <Step title="Review the asset">
+    The `VerActivo` form opens in read-only mode (`modo = eliminar`). All fields are disabled and display the asset's current data. A warning below the title states: *Al eliminar este activo se eliminarán todos su datos de los escáneres*.
+  </Step>
+  <Step title="Confirm deletion">
+    Click **Eliminar Activo** (red button). A browser confirmation dialog appears. Click **OK** to proceed. The request sends `DELETE /assets/:id`. On success you are returned to the previous page.
+  </Step>
+</Steps>
+
+<Warning>
+  Deleting an asset permanently removes all its scanner and movement history. This action cannot be undone.
+</Warning>
+
+## Exporting to PDF
+
+Click **Exportar** (download icon) to generate a landscape A4 PDF of the currently filtered asset list.
+
+The PDF includes:
+- Title: **Inventario de Activos** with today's date and the number of records
+- A table with columns: ID, Nombre, Categoria, Aula, Estado, Responsable, Fecha registro
+
+The file is saved as `activos_YYYY-MM-DD.pdf`. If no assets match the current filters, the export is silently skipped.
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="Dashboard" icon="layout-dashboard" href="/features/dashboard">
+    Overview stats, recent activity, and category distribution.
+  </Card>
+  <Card title="QR Scanner" icon="scan" href="/features/scanner">
+    Scan asset QR codes to look up and log movements.
+  </Card>
+  <Card title="Activity History" icon="clock" href="/features/history">
+    Full movement log for every asset in the inventory.
+  </Card>
+</CardGroup>

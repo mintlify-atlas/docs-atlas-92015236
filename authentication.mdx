@@ -1,0 +1,142 @@
+---
+title: Authentication
+description: How to log in to Ophira Web, how sessions are stored, what happens when your session expires, and what access each role provides.
+---
+
+Ophira Web uses JWT-based authentication. When you log in, the server returns a signed token that is stored in your browser. Every subsequent request to the API sends that token automatically. This page explains how this works from your perspective as a user — not the server implementation.
+
+## Logging in
+
+Navigate to the Ophira Web login page. You will see a two-panel screen: the left panel shows the Ophira QR logo and branding; the right panel contains the login form.
+
+Fill in your credentials:
+
+- **Email** — the email address associated with your Ophira Web account
+- **Password** — your account password
+
+Click **Iniciar Sesión** to submit. If your credentials are correct, you are redirected to the Dashboard immediately.
+
+<Warning>
+The login form does not show a specific error message distinguishing between "wrong email" and "wrong password" — both result in a generic failure response. If login fails, verify that you are using the correct email address and that Caps Lock is not active.
+</Warning>
+
+## The "Remember me" option
+
+The login form includes a **Recuérdame** (Remember me) checkbox.
+
+| Setting | Where the token is stored | When it expires |
+|---|---|---|
+| **Checked** | `localStorage` | Persists until you explicitly sign out or the token itself expires |
+| **Unchecked** (default) | `sessionStorage` | Cleared when you close the browser tab or window |
+
+Use "Remember me" only on personal devices. On shared or public computers, leave it unchecked so your session ends automatically when the browser is closed.
+
+## How sessions work
+
+After a successful login, the server returns a JWT (JSON Web Token). Ophira Web stores this token in your browser (in `localStorage` or `sessionStorage` depending on the "Remember me" choice) under the key `token`.
+
+Every API request the application makes — loading assets, fetching reports, saving records — includes this token in the HTTP `Authorization` header:
+
+```http
+Authorization: Bearer <your-token>
+```
+
+The token itself contains a payload with your user ID and role number. Ophira Web reads these values client-side to determine which features to display without making a separate request.
+
+You do not need to manage this token manually. The browser handles it automatically for as long as the session is active.
+
+## What happens when your session expires
+
+If your token is missing or has expired, any protected page automatically redirects you to `/login`. You will need to sign in again.
+
+This can happen in the following situations:
+
+- You closed the browser without "Remember me" enabled (the `sessionStorage` token is cleared).
+- The JWT itself has reached its server-defined expiry time.
+- An admin deactivated your account or changed your credentials.
+- You signed out manually using the **Cerrar sesión** button in the sidebar.
+
+When the redirect happens, any unsaved form data on the current page is lost. Save your work before navigating away if you are on a form.
+
+## Role-based access
+
+Every Ophira Web account is assigned one of four roles. Your role is encoded in the JWT payload as a numeric value (`rol`).
+
+<Warning>
+The current version of Ophira Web enforces a strict access check: only users whose JWT payload contains `rol: 1` (**Administrador**) can access any protected page. If your token contains any other role value, `protectedRoute.jsx` immediately clears the token and redirects you to `/login`.
+
+This means only Admin accounts can log in through the web application at this time. Supervisor, Auditor, and User roles are defined in the system but are not yet granted access to the web frontend.
+</Warning>
+
+| Role | Numeric value | Current web access |
+|---|---|---|
+| **Administrador** | `1` | Full access — the only role that can log in to the web app |
+| **Supervisor** | Other | Redirected to login — not yet granted web access |
+| **Auditor** | Other | Redirected to login — not yet granted web access |
+| **Usuario** | Other | Redirected to login — not yet granted web access |
+
+If you need access to the web application, contact your administrator to confirm your account has the Administrador role assigned.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="I see a 'Not authorized' error after clicking a button">
+    This means the API rejected your request because your role does not have permission to perform that action. For example, a User trying to create an asset or delete a record will receive a `403 Forbidden` response.
+
+    Check with your system administrator to confirm your assigned role. If you need elevated permissions, an Admin must update your account from the **Usuarios** section.
+  </Accordion>
+
+  <Accordion title="I was redirected to the login page unexpectedly">
+    This happens when your session token is missing or invalid. Common causes:
+
+    - You had "Remember me" unchecked and closed the browser.
+    - Your token expired on the server side.
+    - An admin changed your credentials or deactivated your account.
+
+    Sign in again. If you are redirected to login immediately after signing in, your account role may not be authorized for the requested route — contact your administrator.
+  </Accordion>
+
+  <Accordion title="I checked 'Remember me' but my session still ended">
+    Ophira Web stores a "Remember me" session in `localStorage`. The session can still end if:
+
+    - The JWT itself has a server-defined expiry time that was reached.
+    - You or someone else cleared browser storage (e.g., via browser settings or a privacy/incognito session).
+    - The token was invalidated server-side.
+
+    Sign in again and, if the issue recurs, contact your administrator to check the token expiry configuration.
+  </Accordion>
+
+  <Accordion title="I forgot my password">
+    On the login page, click **¿Olvidaste tu contraseña?**. Enter your email address and click **Enviar correo**. This opens your system's default email client with a pre-filled message to the Ophira Web administrator requesting a password reset.
+
+    Password resets are handled manually by an administrator — there is no automated reset link. Wait for the administrator to update your credentials and notify you.
+  </Accordion>
+
+  <Accordion title="The login page shows no error but I am not redirected to the Dashboard">
+    If the login form submits but nothing happens, the most likely cause is that the backend server is not reachable. The application will show a browser alert with a message like "No hay conexion con el servidor."
+
+    Verify that:
+    - The Ophira Web backend is running and accessible from your network.
+    - There are no firewall or proxy rules blocking connections to the API.
+    - You are using the correct URL for the application.
+
+    Contact your system administrator if the server is expected to be running but the error persists.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="house" href="/introduction">
+    Overview of Ophira Web modules and the four user roles.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Step-by-step guide to logging in and setting up your first asset.
+  </Card>
+  <Card title="Users" icon="users" href="/admin/users">
+    Admin guide to creating accounts and assigning roles.
+  </Card>
+  <Card title="API client" icon="code" href="/dev/api-client">
+    How the frontend API client sends authenticated requests.
+  </Card>
+</CardGroup>

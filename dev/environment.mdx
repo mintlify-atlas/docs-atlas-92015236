@@ -1,0 +1,168 @@
+---
+title: 'Environment & configuration'
+description: 'How the backend URL, Vite, TailwindCSS, PostCSS, and ESLint are configured in Ophira Web.'
+---
+
+## Backend API URL
+
+The base URL for all API calls is defined as a constant at the top of `src/services/api.js`:
+
+```javascript src/services/api.js
+const URL_BASE = "http://localhost:4000/api/";
+```
+
+Every `GET`, `POST`, `PUT`, and `DELETE` request made through the `api` object is prefixed with this value. To point the frontend at a different backend — a staging server, a Docker container, or a production host — change this string directly in that file before running `pnpm build`.
+
+<Warning>
+  `URL_BASE` is hardcoded and baked into the production bundle at build time. You **must** update it to your production API URL before running `pnpm build`, or every request will target `localhost:4000` in the deployed app.
+</Warning>
+
+### No `.env` file
+
+The project does not use a `.env` file. There is no `VITE_API_URL` variable or any `import.meta.env` reference in the current codebase — all configuration is set directly in source files.
+
+Note that `.env` files are listed in `.gitignore` (`*.env`), so if you add one it will not be committed.
+
+<Tip>
+  To make the API URL configurable without changing source code, replace the hardcoded string with an environment variable:
+
+  ```javascript src/services/api.js
+  const URL_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api/";
+  ```
+
+  Then create a `.env.local` file for local development and a `.env.production` file for production builds:
+
+  ```bash .env.local
+  VITE_API_URL=http://localhost:4000/api/
+  ```
+
+  ```bash .env.production
+  VITE_API_URL=https://api.yourdomain.com/api/
+  ```
+
+  Vite automatically loads the right file based on the build mode. All `VITE_` prefixed variables are statically replaced in the bundle at build time.
+</Tip>
+
+---
+
+## Vite configuration
+
+The Vite config (`vite.config.js`) is minimal — it enables the official React plugin, which provides JSX transform and Fast Refresh (HMR):
+
+```javascript vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+})
+```
+
+The React plugin (`@vitejs/plugin-react`) uses Babel under the hood to handle JSX and the automatic React runtime, so you do not need to import React in every component file.
+
+---
+
+## TailwindCSS
+
+TailwindCSS v3 is configured in `tailwind.config.js`:
+
+```javascript tailwind.config.js
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+Key points:
+
+- **`darkMode: 'class'`** — dark mode is toggled by adding the `dark` class to the `<html>` element, not by the OS media query.
+- **`content`** — Tailwind scans `index.html` and every `.js`, `.ts`, `.jsx`, and `.tsx` file under `src/` to tree-shake unused utility classes from the production CSS.
+- The `theme.extend` block is currently empty; add custom colors, fonts, or spacing there without overriding Tailwind's defaults.
+
+---
+
+## PostCSS
+
+PostCSS is configured in `postcss.config.js` with two plugins:
+
+```javascript postcss.config.js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+```
+
+- **`tailwindcss`** — processes Tailwind's `@tailwind` directives and generates the utility classes.
+- **`autoprefixer`** — automatically adds vendor prefixes (`-webkit-`, `-moz-`, etc.) to CSS output for cross-browser compatibility.
+
+Vite picks up this file automatically; no additional Vite plugin configuration is needed.
+
+---
+
+## ESLint
+
+ESLint is configured in `eslint.config.js` using the new flat config format (ESLint 9+):
+
+```javascript eslint.config.js
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{js,jsx}'],
+    extends: [
+      js.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+])
+```
+
+Notable rules and plugins:
+
+- **`eslint-plugin-react-hooks`** — enforces the [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) (`hooks/rules-of-hooks`, `hooks/exhaustive-deps`).
+- **`eslint-plugin-react-refresh`** — warns when a module exports something that Vite's Fast Refresh cannot handle, preventing silent HMR failures.
+- **`no-unused-vars`** — errors on unused variables, but ignores names that start with an uppercase letter or underscore (e.g., constants like `URL_BASE` that are used only for side effects or re-exported).
+- The `dist/` folder is excluded from linting via `globalIgnores`.
+
+Run the linter with:
+
+```bash
+pnpm lint
+```
+
+<CardGroup cols={2}>
+  <Card title="Local setup" icon="computer" href="/dev/setup">
+    Step-by-step guide to cloning the repo and running the dev server.
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/dev/deployment">
+    How to build for production and serve the static output.
+  </Card>
+</CardGroup>

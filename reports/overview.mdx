@@ -1,0 +1,102 @@
+---
+title: Reports & Analytics
+description: Understand asset trends, status distributions, and recent activity using the Análisis y Reportes page in Ophira Web.
+---
+
+The **Análisis y Reportes** page gives you a consolidated view of your fixed asset inventory. All data on this page responds to the date range filter in the top right corner, so every metric and table row reflects only assets registered within the selected period.
+
+## Date range filter
+
+Use the dropdown in the page header to select the time window applied to all statistics and the Recent Activity table:
+
+| Option | Period |
+|---|---|
+| Tras 30 días | Assets registered in the last 30 days |
+| Tras 90 días | Assets registered in the last 90 days |
+| Tras 1 año | Assets registered in the last 365 days |
+
+Changing the selection immediately recalculates all four stat cards, the donut chart percentages, and the rows shown in the Recent Activity table.
+
+<Note>
+"Recently Added" refers to assets whose `fecha_registro` (registration date) falls within the selected date range, not assets that were physically moved or updated during that period.
+</Note>
+
+---
+
+## Summary stat cards
+
+Four cards appear at the top of the page. Each card displays a primary value, a secondary indicator, and a short description.
+
+<CardGroup cols={4}>
+  <Card title="Total de Activos" icon="file-text" href="/reports/overview">
+    Total count of all assets whose registration date falls within the selected range. The secondary indicator shows how many of those are "recientes" (recently added within the same window).
+  </Card>
+  <Card title="Bienes Activos" icon="circle-check" href="/reports/overview">
+    Count of assets with estado = **Activo** within the filtered range, plus the percentage they represent of the total filtered assets (e.g. `84.2%`).
+  </Card>
+  <Card title="Mantenimiento" icon="alert-circle" href="/reports/overview">
+    Count of assets with estado = **Mantenimiento** within the filtered range. These are assets currently under revision or repair and not available for normal use.
+  </Card>
+  <Card title="Valor Total" icon="dollar-sign" href="/reports/overview">
+    Sum of `valor_total` for the full inventory, expressed in Mexican Pesos (MXN) using the `es-MX` locale format (e.g. `$1,250,000.00`). This figure is not filtered by date range — it always reflects the total book value of the complete inventory.
+  </Card>
+</CardGroup>
+
+---
+
+## Asset Acquisition chart
+
+The **Adquisición de Activos** line chart occupies the left two-thirds of the second row. It shows how many new assets were registered each calendar month, from January (Ene) through December (Dic).
+
+- The horizontal axis lists the 12 months: Ene, Feb, Mar, Abr, May, Jun, Jul, Ago, Sep, Oct, Nov, Dic.
+- The vertical axis scales dynamically to the highest monthly value in the dataset.
+- Data points are drawn as filled circles on a blue polyline, with a light blue fill area beneath the line.
+- Values come from the `/assets/reporte` endpoint fields `enero` through `diciembre`, which count the number of assets registered in each month across the full inventory (not filtered by date range).
+
+---
+
+## Asset Status donut chart
+
+The **Estatus de Activos** donut chart sits to the right of the acquisition chart. It shows the percentage split of all filtered assets across three states:
+
+| Segment | Color | Meaning |
+|---|---|---|
+| Activo | Green (`#10b981`) | Assets in normal operation |
+| Mantenimiento | Amber (`#f59e0b`) | Assets currently under maintenance |
+| Retirado | Gray (`#6b7280`) | Assets removed from service (calculated as total minus Activo minus Mantenimiento) |
+
+Each percentage is computed from the filtered asset list. If the filtered count is zero, all segments show `0%`.
+
+---
+
+## Recent Activity table
+
+The **Actividad Reciente** table shows the last 10 assets (by registration order) that fall within the selected date range. Use "Ver Todo" to navigate to the full [History](/features/history) page.
+
+| Column | Source field | Notes |
+|---|---|---|
+| Activo | `nombre` + `id_activo` | Asset name with its ID shown below in smaller text |
+| Categoría | `categoria` | Category assigned at registration |
+| Responsable | `responsable` | Name of the person responsible for the asset |
+| Estado | `estado` | Displayed with a color label: green for Activo, yellow for Mantenimiento, red for Retirado |
+| Última Vista | `fecha_registro` + `aula` / `tipo_aula` | Registration date formatted as `dd/mm/yyyy`, with the room and room type on the second line |
+| Acción | — | Always shows "Registro de activo" for entries in this table |
+
+If no assets were registered in the selected range, the table displays: "No hay actividad registrada para el rango seleccionado."
+
+---
+
+## Exporting the report
+
+Click **Exportar PDF** in the top-right header to download a PDF of the current view.
+
+The exported file includes:
+- Page title ("Reporte de Activos") and the generation date
+- The applied date range label (e.g. "Tras 30 dias")
+- Inline summary line: Total de Activos, Bienes Activos, Mantenimiento, Valor Total
+- A status distribution table with Activo, Mantenimiento, and Retirado percentages
+- The full Recent Activity table (up to 10 rows) with columns: Activo, Categoría, Responsable, Estado, Última vista, Acción
+
+The file is saved as `reporte_activos_YYYY-MM-DD.pdf`.
+
+For a detailed reference on all export formats available in Ophira Web, see [Exporting PDFs](/reports/exporting).

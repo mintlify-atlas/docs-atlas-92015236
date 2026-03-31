@@ -1,97 +1,62 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Welcome to Ophira Web"
+description: "A fixed asset management platform for tracking inventory, auditing assets by location, scanning QR codes, and generating reports."
 ---
 
-## Setting up
+Ophira Web is a web-based system designed to help organizations manage their fixed assets throughout their entire lifecycle — from registration to retirement. It gives your team real-time visibility into asset status, location, and history across buildings, floors, and rooms.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Create your account, log in, and register your first asset in minutes.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Asset Inventory" icon="boxes-stacked" href="/features/assets">
+    Browse, filter, and manage all assets across your organization.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="QR Scanner" icon="qrcode" href="/features/scanner">
+    Instantly look up any asset by scanning its QR code with your camera.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Audits" icon="clipboard-check" href="/features/audits">
+    Run location-based audits and review results room by room.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What you can do with Ophira Web
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="Dashboard" icon="chart-pie" href="/features/dashboard">
+    Monitor total assets, maintenance counts, and inventory value at a glance.
+  </Card>
+  <Card title="History" icon="clock-rotate-left" href="/features/history">
+    Track every movement, scan, and change made to any asset.
+  </Card>
+  <Card title="Reports" icon="file-pdf" href="/reports/overview">
+    Export asset data and reports as PDF files.
+  </Card>
+  <Card title="User Management" icon="users" href="/admin/users">
+    Manage team members and assign roles like Admin, Auditor, and Supervisor.
+  </Card>
+  <Card title="Locations" icon="building" href="/admin/locations">
+    Organize assets across a hierarchy of buildings, floors, and rooms.
+  </Card>
+  <Card title="Categories" icon="tags" href="/admin/categories">
+    Group assets into custom categories for filtering and reporting.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Get started in three steps
 
-## Need inspiration?
+<Steps>
+  <Step title="Log in to Ophira Web">
+    Navigate to the application URL and sign in with your credentials. Your administrator provides your initial account details.
+  </Step>
+  <Step title="Set up your locations and categories">
+    Before registering assets, create your location hierarchy (buildings → floors → rooms) and any asset categories you need. This takes about five minutes.
+  </Step>
+  <Step title="Register your first asset">
+    Go to **Assets** and click **New Asset**. Fill in the name, category, location, and responsible party. Ophira automatically assigns an ID and generates a QR code you can print and attach to the physical item.
+  </Step>
+</Steps>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<Note>
+  Need help from a developer setting up the project? See the [Developer Guide](/dev/setup) for local setup and deployment instructions.
+</Note>

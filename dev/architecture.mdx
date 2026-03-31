@@ -1,0 +1,236 @@
+---
+title: Frontend architecture
+description: Overview of the Ophira Web frontend stack, directory layout, and shared infrastructure components.
+---
+
+Ophira Web is a single-page application built with React 19 and Vite 7. All pages are client-side rendered; the backend is a separate Node.js/Express API.
+
+## Tech stack
+
+<CardGroup cols={2}>
+  <Card title="React 19" icon="react" href="/dev/routing">
+    UI layer. Uses the new JSX transform, no extra Babel config needed.
+  </Card>
+  <Card title="Vite 7" icon="bolt" href="/dev/setup">
+    Dev server and bundler. Configured with `@vitejs/plugin-react`.
+  </Card>
+  <Card title="TailwindCSS 3" icon="palette" href="/dev/setup">
+    Utility-first styling. Dark mode is toggled via the `dark` class on `<html>`.
+  </Card>
+  <Card title="React Router DOM 7" icon="route" href="/dev/routing">
+    Client-side routing with `BrowserRouter`, nested routes, and `Navigate`.
+  </Card>
+</CardGroup>
+
+## Key dependencies
+
+| Package | Version | Purpose |
+|---|---|---|
+| `react-router-dom` | ^7.13.1 | Client-side routing |
+| `lucide-react` | ^0.577.0 | Icon library used throughout the UI |
+| `jspdf` | ^4.2.1 | PDF export for asset reports |
+| `jspdf-autotable` | ^5.0.7 | Table plugin for jsPDF |
+| `html2canvas` | ^1.4.1 | DOM-to-canvas screenshots for PDF generation |
+| `qrcode` | ^1.5.4 | QR code image generation for assets |
+| `xlsx` | ^0.18.5 | Excel/spreadsheet export |
+
+<Note>
+  `jsQR` is imported in `Scanner.jsx` for canvas-based QR decoding but is not declared in `package.json` as a direct dependency. The Scanner page uses `jsQR` as a fallback when the browser's native `BarcodeDetector` API is unavailable.
+</Note>
+
+## Directory structure
+
+```
+Frontend/
+├── src/
+│   ├── App.jsx             # Root component: ThemeProvider + BrowserRouter + route tree
+│   ├── main.jsx            # React entry point — mounts <App /> into #root
+│   ├── index.css           # Global styles (Tailwind directives)
+│   ├── assets/
+│   │   └── OphiraLogo.png  # Brand logo used in the sidebar
+│   ├── pages/
+│   │   ├── dashboard.jsx
+│   │   ├── Activos.jsx
+│   │   ├── Scanner.jsx
+│   │   ├── Reportes.jsx
+│   │   ├── Historial.jsx
+│   │   ├── Auditorias.jsx
+│   │   ├── DetallesAuditoria.jsx
+│   │   ├── Usuarios.jsx
+│   │   ├── Perfil.jsx
+│   │   ├── login.jsx
+│   │   ├── crudActivos/
+│   │   │   └── verActivo.jsx   # Create / edit / delete asset form
+│   │   └── crudUsuarios/
+│   │       └── verUsuario.jsx  # Create / view / edit / delete user form
+│   ├── components/
+│   │   ├── Layout.jsx          # Sidebar + main content wrapper
+│   │   ├── Slidebar.jsx        # Fixed left navigation sidebar
+│   │   └── protectedRoute.jsx  # Auth + role guard
+│   ├── context/
+│   │   └── ThemeContext.jsx    # Dark/light mode provider
+│   └── services/
+│       ├── api.js              # Fetch-based HTTP client
+│       └── authStorage.js      # JWT read/write helpers
+├── public/
+├── vite.config.js
+├── tailwind.config.js
+└── package.json
+```
+
+## ThemeContext
+
+`ThemeContext` provides dark/light mode state to the entire application. It is defined in `src/context/ThemeContext.jsx`.
+
+**What it exposes:**
+
+| Value | Type | Description |
+|---|---|---|
+| `isDark` | `boolean` | `true` when dark mode is active |
+| `toggleTheme` | `() => void` | Flips `isDark` and persists the preference |
+
+**Initialisation order:**
+
+1. Reads `localStorage.getItem('theme')` on first render.
+2. Falls back to `window.matchMedia('(prefers-color-scheme: dark)')` if no saved preference exists.
+3. On every `isDark` change, adds or removes the `dark` class from `document.documentElement` and writes the new value to `localStorage`.
+
+```jsx
+// src/context/ThemeContext.jsx
+import { createContext, useContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+  const [isDark, setIsDark] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    const htmlElement = document.documentElement;
+    if (isDark) {
+      htmlElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      htmlElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark(!isDark);
+
+  return (
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error('useTheme debe ser usado dentro de ThemeProvider');
+  return context;
+};
+```
+
+Consume the context in any component with the `useTheme` hook:
+
+```jsx
+import { useTheme } from '../context/ThemeContext';
+
+const MyComponent = () => {
+  const { isDark, toggleTheme } = useTheme();
+  return (
+    <button onClick={toggleTheme}>
+      {isDark ? 'Switch to light' : 'Switch to dark'}
+    </button>
+  );
+};
+```
+
+## ProtectedRoute
+
+`src/components/protectedRoute.jsx` guards every authenticated route. It performs two checks:
+
+1. **Token presence** — calls `getToken()`. If no token exists in `localStorage` or `sessionStorage`, redirects to `/login`.
+2. **Role check** — calls `getTokenRole()`. The application only permits users with `rol === 1`. Any other role value clears the token and redirects to `/login`.
+
+```jsx
+// src/components/protectedRoute.jsx
+import { Outlet, Navigate } from 'react-router-dom';
+import { clearToken, getToken, getTokenRole } from '../services/authStorage';
+
+const ProtectedRoute = ({ children }) => {
+  const token = getToken();
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+
+  const rol = getTokenRole();
+  if (rol !== 1) {
+    clearToken();
+    return <Navigate to="/login" />;
+  }
+
+  return <Outlet />;
+};
+
+export default ProtectedRoute;
+```
+
+<Warning>
+  Only users whose JWT payload contains `rol: 1` can access the application. Users with any other role value are logged out automatically.
+</Warning>
+
+## Layout
+
+`src/components/Layout.jsx` is the shared shell rendered around every authenticated page. It composes the fixed `Slidebar` on the left and a scrollable `<main>` content area on the right.
+
+```jsx
+// src/components/Layout.jsx
+import Slidebar from './Slidebar';
+import { useTheme } from '../context/ThemeContext';
+
+const Layout = ({ children }) => {
+  const { isDark } = useTheme();
+
+  return (
+    <div className={`flex min-h-screen transition-colors duration-200 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+      <Slidebar />
+      <main className={`flex-1 ml-64 p-8 transition-colors duration-200 ${isDark ? 'bg-slate-950' : 'bg-slate-50'}`}>
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+};
+```
+
+The sidebar is `w-64` (256 px) and fixed; the main area compensates with `ml-64`. Content is capped at `max-w-7xl` and centred.
+
+## Sidebar navigation
+
+`src/components/Slidebar.jsx` is a fixed left panel that includes:
+
+- The Ophira QR logo and version label.
+- `NavLink` entries for Dashboard, Activos, Leer QR, Reportes, Historial, Auditorias, and Usuarios. The active link is highlighted with `bg-blue-600 text-white`.
+- A user avatar section at the bottom that fetches the current user's profile from `GET /api/usuarios/:id` (id decoded from the JWT) and navigates to `/perfil` on click.
+- Dark/light mode toggle button.
+- Logout button that calls `clearToken()` and navigates to `/login`.
+
+## Related pages
+
+<CardGroup cols={3}>
+  <Card title="Routing" icon="route" href="/dev/routing">
+    Full route tree and navigation patterns.
+  </Card>
+  <Card title="API client" icon="plug" href="/dev/api-client">
+    HTTP client and error handling pipeline.
+  </Card>
+  <Card title="Setup" icon="terminal" href="/dev/setup">
+    Running the dev server and environment config.
+  </Card>
+</CardGroup>

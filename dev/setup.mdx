@@ -1,0 +1,120 @@
+---
+title: 'Local development setup'
+description: 'Get Ophira Web running on your machine for development.'
+---
+
+## Prerequisites
+
+Before you start, make sure you have the following installed and available:
+
+- **Node.js 18+** — required to run Vite and the toolchain
+- **pnpm** — the project uses `pnpm-lock.yaml`; npm or yarn will not reproduce the exact dependency tree
+- **Backend API** — the frontend connects to `http://localhost:4000/api/`. The backend server must be running before you can log in or load any data
+
+<Info>
+  If you don't have pnpm installed, run `npm install -g pnpm` to install it globally.
+</Info>
+
+## Install and run
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/CaralbMen/Frontend_Ophira_Web
+    ```
+  </Step>
+
+  <Step title="Navigate to the Frontend directory">
+    ```bash
+    cd Frontend_Ophira_Web/Frontend
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    <CodeGroup>
+
+    ```bash pnpm
+    pnpm install
+    ```
+
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      The project tracks a `pnpm-lock.yaml` lockfile. Using pnpm guarantees the same dependency versions as the rest of the team.
+    </Note>
+  </Step>
+
+  <Step title="Start the dev server">
+    <CodeGroup>
+
+    ```bash pnpm
+    pnpm dev
+    ```
+
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    </CodeGroup>
+
+    Vite starts with Hot Module Replacement (HMR) enabled. The terminal will print the local URL once the server is ready.
+  </Step>
+
+  <Step title="Open the app in your browser">
+    Navigate to [http://localhost:5173](http://localhost:5173). Vite uses port `5173` by default.
+  </Step>
+
+  <Step title="Log in with your credentials">
+    Enter your username and password on the login screen. Authentication requires the backend API to be running and reachable at `http://localhost:4000/api/`.
+  </Step>
+</Steps>
+
+## Available scripts
+
+All scripts are defined in `package.json` and run through your package manager of choice.
+
+| Script | Command | Description |
+| --- | --- | --- |
+| Dev server | `pnpm dev` | Starts the Vite development server with HMR on `http://localhost:5173` |
+| Production build | `pnpm build` | Compiles and bundles the app to the `dist/` folder |
+| Preview build | `pnpm preview` | Serves the production build locally so you can verify it before deploying |
+| Lint | `pnpm lint` | Runs ESLint across all `.js` and `.jsx` files in `src/` |
+
+## Project structure overview
+
+The project is a standard Vite + React 19 single-page application. Key files and directories:
+
+```
+Frontend/
+├── index.html              # HTML entry point — mounts <div id="root">
+├── src/
+│   ├── main.jsx            # React root render
+│   └── services/
+│       └── api.js          # Centralised fetch wrapper (URL_BASE lives here)
+├── vite.config.js          # Vite configuration
+├── tailwind.config.js      # TailwindCSS configuration
+├── postcss.config.js       # PostCSS configuration
+├── eslint.config.js        # ESLint flat config
+└── package.json            # Dependencies and scripts
+```
+
+<CardGroup cols={2}>
+  <Card title="Environment & configuration" icon="gear" href="/dev/environment">
+    Learn how the backend URL, Vite, Tailwind, and ESLint are configured.
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/dev/deployment">
+    How to build Ophira Web for production and serve the static output.
+  </Card>
+</CardGroup>
